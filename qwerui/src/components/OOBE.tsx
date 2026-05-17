@@ -1,0 +1,119 @@
+import { useState, useEffect } from 'react';
+
+interface OOBEProps {
+  /**
+   * Возвращает выбранный PIN (null если не указан) и тему.
+   */
+  onComplete: (pin: string | null, theme: 'light' | 'dark') => void;
+}
+
+export default function OOBE({ onComplete }: OOBEProps) {
+  const [step, setStep] = useState(1); // 1‑тема, 2‑PIN, 3‑установка, 4‑готово
+  const [theme, setTheme] = useState<'light' | 'dark' | null>(null);
+  const [pin, setPin] = useState('');
+  const [progress, setProgress] = useState(0);
+
+  /* ---------- Шаг 1 – выбор темы ---------- */
+  const chooseTheme = (t: 'light' | 'dark') => {
+    setTheme(t);
+    setStep(2);
+  };
+
+  /* ---------- Шаг 2 – ввод PIN ---------- */
+  const isPinValid = pin.length === 0 || pin.length === 4;
+  const goInstall = () => {
+    if (isPinValid) setStep(3);
+  };
+
+  /* ---------- Шаг 3 – имитация установки (10 сек) ---------- */
+  useEffect(() => {
+    if (step !== 3) return;
+    const start = Date.now();
+    const id = setInterval(() => {
+      const elapsed = Date.now() - start;
+      setProgress(Math.min(100, (elapsed / 10000) * 100));
+      if (elapsed >= 10000) {
+        clearInterval(id);
+        setStep(4);
+      }
+    }, 200);
+    return () => clearInterval(id);
+  }, [step]);
+
+  /* ---------- Шаг 4 – завершение ---------- */
+  const finish = () => {
+    if (!theme) return;
+    onComplete(pin || null, theme);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-indigo-900 to-indigo-950">
+      <div className="rounded-xl bg-white/10 backdrop-blur-2xl p-8 w-80 text-center">
+        {/* ---------- STEP 1 ---------- */}
+        {step === 1 && (
+          <>
+            <h2 className="mb-4 font-semibold text-sm text-white">Выберите тему</h2>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => chooseTheme('dark')}
+                className={`px-3 py-1 rounded-full ${theme === 'dark' ? 'bg-indigo-600 text-white' : 'bg-indigo-400/20 text-white/60'}`}
+              >
+                Тёмная
+              </button>
+              <button
+                onClick={() => chooseTheme('light')}
+                className={`px-3 py-1 rounded-full ${theme === 'light' ? 'bg-indigo-600 text-white' : 'bg-indigo-400/20 text-white/60'}`}
+              >
+                Светлая
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* ---------- STEP 2 ---------- */}
+        {step === 2 && (
+          <>
+            <h2 className="mb-4 font-semibold text-sm text-white">Введите PIN‑код (4 цифры). Можно пропустить.</h2>
+            <input
+              type="text"
+              value={pin}
+              onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              placeholder="____"
+              className="w-full px-2 py-1 bg-indigo-400/20 text-white rounded text-center"
+            />
+            <button
+              onClick={goInstall}
+              disabled={!isPinValid}
+              className={`mt-4 w-full py-1 rounded ${isPinValid ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-indigo-400/30 text-white/50 cursor-not-allowed'}`}
+            >
+              Далее
+            </button>
+          </>
+        )}
+
+        {/* ---------- STEP 3 ---------- */}
+        {step === 3 && (
+          <>
+            <h2 className="mb-4 font-semibold text-sm text-white">Установка стандартных приложений…</h2>
+            <div className="bg-indigo-400/20 rounded-full h-2 w-full overflow-hidden">
+              <div className="h-full bg-indigo-600 transition-all" style={{ width: `${progress}%` }} />
+            </div>
+          </>
+        )}
+
+        {/* ---------- STEP 4 ---------- */}
+        {step === 4 && (
+          <>
+            <h2 className="mb-4 font-semibold text-sm text-white">Готово! 🎉</h2>
+            <button
+              onClick={finish}
+              className="w-full py-2 bg-indigo-600 rounded text-white hover:bg-indigo-700"
+            >
+              Начать
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
