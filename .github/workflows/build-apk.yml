@@ -1,0 +1,80 @@
+name: Build APK
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: qwerui/package-lock.json
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: |
+          cd qwerui
+          npm install
+
+      - name: Build web app
+        run: |
+          cd qwerui
+          npm run build
+
+      - name: Init Capacitor Android
+        run: |
+          cd qwerui
+          npx cap add android
+
+      - name: Sync Capacitor
+        run: |
+          cd qwerui
+          npx cap sync
+
+      - name: Build Debug APK
+        run: |
+          cd qwerui/android
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: spidiphone-debug-apk
+          path: qwerui/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+
+      - name: Upload to GitHub Releases
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: qwerui/android/app/build/outputs/apk/debug/app-debug.apk
+          tag_name: v${{ github.run_number }}
+          name: SpidiPhone v2.110.001 Build ${{ github.run_number }}
+          body: |
+            Автоматическая сборка APK
+            - Версия: 2.110.001
+            - Build: ${{ github.run_number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
