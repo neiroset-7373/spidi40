@@ -30,6 +30,7 @@ yarn-error.log*
 
 # Capacitor / Android
 android/
+!android/gradle/wrapper/gradle-wrapper.properties
 ios/
 .gradle/
 
