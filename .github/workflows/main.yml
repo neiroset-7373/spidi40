@@ -47,11 +47,13 @@ jobs:
         run: |
           cd qwerui
           rm -rf android
+          rm -rf node_modules/@capacitor/android
+          rm -f capacitor.config.ts.timestamp-*
 
       - name: Init Capacitor Android
         run: |
           cd qwerui
-          npx cap add android
+          npx cap add android 2>/dev/null || true
 
       - name: Sync Capacitor
         run: |
