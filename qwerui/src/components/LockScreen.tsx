@@ -9,6 +9,9 @@ export default function LockScreen({ onUnlock }: LockScreenProps) {
   const [swiping, setSwiping] = useState(false);
   const [swipeY, setSwipeY] = useState(0);
   const [startY, setStartY] = useState(0);
+  const [showPinEntry, setShowPinEntry] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000);
@@ -36,12 +39,39 @@ export default function LockScreen({ onUnlock }: LockScreenProps) {
 
   const handleTouchEnd = () => {
     if (swipeY > 80) {
-      onUnlock();
+      setShowPinEntry(true);
     } else {
       setSwipeY(0);
     }
     setSwiping(false);
   };
+
+  const handlePinSubmit = () => {
+    const savedPin = localStorage.getItem('spidiphone_pin');
+    if (!savedPin || pinInput === savedPin) {
+      onUnlock();
+    } else {
+      setError(true);
+      setPinInput('');
+      setTimeout(() => setError(false), 500);
+    }
+  };
+
+  const handlePinKey = (num: string) => {
+    if (pinInput.length < 4) {
+      setPinInput(pinInput + num);
+    }
+  };
+
+  const handlePinDelete = () => {
+    setPinInput(pinInput.slice(0, -1));
+  };
+
+  useEffect(() => {
+    if (pinInput.length === 4 && !showPinEntry) {
+      setShowPinEntry(true);
+    }
+  }, [pinInput, showPinEntry]);
 
   return (
     <div
@@ -65,20 +95,17 @@ export default function LockScreen({ onUnlock }: LockScreenProps) {
       <div className="relative z-10 w-full flex justify-between items-center px-8 pt-14 pb-2 text-white text-sm font-medium">
         <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatTime(time)}</span>
         <div className="flex items-center gap-1.5">
-          {/* Signal */}
           <div className="flex items-end gap-[2px] h-4">
             {[3,5,7,9].map((h,i) => (
               <div key={i} className="w-[3px] rounded-[1px]"
                 style={{ height: `${h}px`, background: i < 3 ? '#fff' : 'rgba(255,255,255,0.4)' }} />
             ))}
           </div>
-          {/* WiFi */}
           <svg width="16" height="12" viewBox="0 0 24 18" fill="none">
             <path d="M12 14.5a2 2 0 110 4 2 2 0 010-4z" fill="white"/>
             <path d="M7 10.5C8.7 8.8 10.2 8 12 8s3.3.8 5 2.5" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"/>
             <path d="M3 6.5C6.1 3.3 8.9 2 12 2s5.9 1.3 9 4.5" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"/>
           </svg>
-          {/* Battery */}
           <img
             src="/system_icons/battery.jpg"
             alt="Battery"
@@ -89,6 +116,39 @@ export default function LockScreen({ onUnlock }: LockScreenProps) {
           />
         </div>
       </div>
+
+      {/* PIN Entry Overlay */}
+      {showPinEntry && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90">
+          <div className="text-white text-xl mb-4">Введите PIN</div>
+          <div className={`flex gap-3 mb-6 ${error ? 'animate-pulse' : ''}`}>
+            {[0,1,2,3].map(i => (
+              <div key={i} className={`w-4 h-4 rounded-full transition-all ${
+                i < pinInput.length ? 'bg-white scale-110' : 'bg-white/20'
+              }`} />
+            ))}
+          </div>
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            {[1,2,3,4,5,6,7,8,9].map(num => (
+              <button
+                key={num}
+                onClick={() => handlePinKey(num.toString())}
+                className="w-16 h-16 rounded-full text-white text-2xl font-light transition-all active:scale-90"
+                style={{ background: 'rgba(255,255,255,0.15)' }}>
+                {num}
+              </button>
+            ))}
+            <button onClick={handlePinDelete} className="w-16 h-16 rounded-full text-white/60 text-xl transition-all active:scale-90"
+              style={{ background: 'rgba(255,255,255,0.1)' }}>⌫</button>
+            <button onClick={() => handlePinKey('0')} className="w-16 h-16 rounded-full text-white text-2xl font-light transition-all active:scale-90"
+              style={{ background: 'rgba(255,255,255,0.15)' }}>0</button>
+            <button onClick={handlePinSubmit} className="w-16 h-16 rounded-full text-white/60 text-xl transition-all active:scale-90"
+              style={{ background: 'rgba(255,255,255,0.1)' }}>✓</button>
+          </div>
+          <button onClick={() => { setShowPinEntry(false); setPinInput(''); }}
+            className="text-white/40 text-sm mt-4">Отмена</button>
+        </div>
+      )}
 
       {/* Time */}
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center -mt-16">
@@ -119,7 +179,7 @@ export default function LockScreen({ onUnlock }: LockScreenProps) {
       {/* Swipe hint */}
       <div className="relative z-10 pb-10 flex flex-col items-center gap-3"
         style={{
-          opacity: Math.max(0, 1 - swipeY / 60),
+          opacity: showPinEntry ? 0 : Math.max(0, 1 - swipeY / 60),
           transform: `translateY(-${swipeY * 0.5}px)`,
           transition: swiping ? 'none' : 'all 0.4s ease',
         }}>

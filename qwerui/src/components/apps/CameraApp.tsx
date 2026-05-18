@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
+import { addGalleryImage } from '../../utils/gallery';
 
-type CameraMode = 'фото' | 'видео' | 'панорама' | 'портрет';
+type CameraMode = 'фото' | 'видео';
 
 export default function CameraApp() {
   const [mode, setMode] = useState<CameraMode>('фото');
@@ -18,14 +19,20 @@ export default function CameraApp() {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: 'user',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          } 
+        });
         setStream(stream);
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
       } catch (err) {
-        setError('Не удалось получить доступ к камере. Пожалуйста, разрешите доступ.');
         console.error('Camera error:', err);
+        setError('Камера недоступна. Проверьте разрешения.');
       }
     };
 
@@ -39,21 +46,28 @@ export default function CameraApp() {
   }, []);
 
   const takePhoto = () => {
-    if (canvasRef.current && videoRef.current) {
-      setShutter(true);
-      setTimeout(() => setShutter(false), 150);
+    if (!canvasRef.current || !videoRef.current) return;
+    
+    setShutter(true);
+    setTimeout(() => setShutter(false), 150);
 
-      const ctx = canvasRef.current.getContext('2d');
-      if (ctx) {
-        const video = videoRef.current;
-        canvasRef.current.width = video.videoWidth;
-        canvasRef.current.height = video.videoHeight;
-        ctx.translate(canvasRef.current.width, 0);
-        ctx.scale(-1, 1);
-        ctx.drawImage(video, 0, 0, canvasRef.current.width, canvasRef.current.height);
-        const photoDataUrl = canvasRef.current.toDataURL('image/jpeg');
-        setLastPhoto(photoDataUrl);
-      }
+    const ctx = canvasRef.current.getContext('2d');
+    if (!ctx) return;
+    
+    const video = videoRef.current;
+    canvasRef.current.width = video.videoWidth || 1920;
+    canvasRef.current.height = video.videoHeight || 1080;
+    
+    ctx.drawImage(video, 0, 0, canvasRef.current.width, canvasRef.current.height);
+    const photoDataUrl = canvasRef.current.toDataURL('image/jpeg', 0.9);
+    setLastPhoto(photoDataUrl);
+    
+    // Сохраняем в галерею
+    try {
+      addGalleryImage(photoDataUrl);
+      console.log('Photo saved to gallery');
+    } catch (e) {
+      console.error('Failed to save to gallery:', e);
     }
   };
 
@@ -66,42 +80,41 @@ export default function CameraApp() {
   };
 
   return (
-    <div className="h-full flex flex-col" style={{ background: '#000' }}>
+    <div className="h-full flex flex-col w-full" style={{ background: '#000' }}>
       {/* Viewfinder */}
-      <div className="flex-1 relative overflow-hidden"
-        style={{
-          background: 'linear-gradient(135deg, #0a0a1a 0%, #0d1a2a 50%, #0a0a0a 100%)',
-        }}>
-
+      <div className="flex-1 relative overflow-hidden w-full">
         {/* Shutter flash */}
         <div className="absolute inset-0 z-30 pointer-events-none transition-opacity duration-100"
           style={{ background: '#fff', opacity: shutter ? 0.8 : 0 }} />
 
         {/* Video stream */}
-        {stream && (
+        {stream && videoRef.current && (
           <video
             ref={videoRef}
             autoPlay
             muted
             playsInline
-            className="w-full h-full object-cover"
-            style={{ transform: 'scaleX(-1)' }} // mirror for natural selfie-like preview
+            style={{
+              width: '100%', 
+              height: '100%', 
+              objectFit: 'cover',
+              transform: 'scaleX(-1)'
+            }}
           />
         )}
 
         {/* Error overlay */}
         {error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black text-white p-4 text-center">
+          <div className="absolute inset-0 flex items-center justify-center bg-black text-white p-4 text-center z-40">
             <div>
-              <div className="text-red-500 text-xl mb-2">⚠️ Ошибка камеры</div>
+              <div className="text-red-500 text-xl mb-2">⚠️ Ошибка</div>
               <div className="text-sm">{error}</div>
             </div>
           </div>
         )}
 
         {/* Grid lines */}
-        <div className="absolute inset-0 pointer-events-none"
-          style={{ opacity: 0.15 }}>
+        <div className="absolute inset-0 pointer-events-none z-10" style={{ opacity: 0.15 }}>
           <div className="absolute inset-0 grid grid-cols-3 grid-rows-3">
             {Array.from({ length: 9 }).map((_, i) => (
               <div key={i} className="border border-white/30" />
@@ -109,21 +122,12 @@ export default function CameraApp() {
           </div>
         </div>
 
-        {/* Focus ring */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-24 h-24 rounded-xl"
-            style={{
-              border: '2px solid rgba(255,220,0,0.8)',
-              boxShadow: '0 0 0 1px rgba(0,0,0,0.3)',
-            }} />
-        </div>
-
         {/* Top controls */}
-        <div className="absolute top-4 left-0 right-0 flex justify-between items-center px-6">
+        <div className="absolute top-4 left-0 right-0 flex justify-between items-center px-4 z-20">
           <button onClick={() => setFlash(!flash)}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-lg transition-all active:scale-90"
+            className="w-10 h-10 rounded-full flex items-center justify-center text-sm transition-all active:scale-90"
             style={{ background: flash ? 'rgba(255,220,0,0.3)' : 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)' }}>
-            {flash ? 'ON' : 'OFF'}
+            ⚡
           </button>
 
           <div className="px-3 py-1 rounded-full text-white text-xs font-medium"
@@ -131,12 +135,11 @@ export default function CameraApp() {
             {zoom}x
           </div>
 
-          <button className="w-10 h-10 rounded-full flex items-center justify-center text-lg transition-all active:scale-90"
-            style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)' }} />
+          <div className="w-10 h-10" />
         </div>
 
         {/* Zoom controls */}
-        <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
+        <div className="absolute bottom-20 left-0 right-0 flex justify-center gap-2 z-20">
           {zoomLevels.map(z => (
             <button key={z} onClick={() => setZoom(z)}
               className="px-3 py-1.5 rounded-full text-sm font-medium transition-all active:scale-90"
@@ -152,9 +155,9 @@ export default function CameraApp() {
       </div>
 
       {/* Mode selector */}
-      <div className="flex justify-center gap-0 py-3 flex-shrink-0"
+      <div className="flex justify-center gap-4 py-3 flex-shrink-0"
         style={{ background: '#111' }}>
-        {['фото', 'видео', 'панорама', 'портрет'].map(m => (
+        {['фото', 'видео'].map(m => (
           <button key={m} onClick={() => setMode(m as CameraMode)}
             className="px-4 py-1.5 text-sm font-medium rounded-full transition-all"
             style={{
@@ -167,14 +170,14 @@ export default function CameraApp() {
       </div>
 
       {/* Camera controls */}
-      <div className="flex items-center justify-between px-8 py-4 flex-shrink-0"
+      <div className="flex items-center justify-between px-6 py-4 flex-shrink-0"
         style={{ background: '#000' }}>
 
         {/* Last photo thumbnail */}
         <button
           onClick={downloadPhoto}
           disabled={!lastPhoto}
-          className="w-14 h-14 rounded-2xl overflow-hidden relative border-2 transition-all"
+          className="w-12 h-12 rounded-xl overflow-hidden relative border-2 transition-all"
           style={{
             borderColor: lastPhoto ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)',
           }}>
@@ -182,7 +185,7 @@ export default function CameraApp() {
             <img src={lastPhoto} alt="Last" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs">
-              Нет
+              📷
             </div>
           )}
         </button>
@@ -193,20 +196,20 @@ export default function CameraApp() {
           disabled={!stream}
           className="transition-all active:scale-90"
           style={{ outline: 'none' }}>
-          <div className="w-20 h-20 rounded-full flex items-center justify-center"
+          <div className="w-16 h-16 rounded-full flex items-center justify-center"
             style={{ background: 'rgba(255,255,255,0.15)', border: '3px solid rgba(255,255,255,0.4)' }}>
-            <div className="w-14 h-14 rounded-full"
-              style={{
-                background: mode === 'видео'
-                  ? 'linear-gradient(135deg, #ff4757, #c0392b)'
-                  : '#fff',
-              }} />
+            <div className="w-12 h-12 rounded-full"
+              style={{ background: '#fff' }} />
           </div>
         </button>
 
-        {/* Flip camera */}
-        <button className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-all active:scale-90"
-          style={{ background: 'rgba(255,255,255,0.1)', border: '2px solid rgba(255,255,255,0.1)' }} />
+        {/* Gallery shortcut */}
+        <button
+          onClick={() => window.location.href = '#gallery'}
+          className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl transition-all active:scale-90"
+          style={{ background: 'rgba(255,255,255,0.1)', border: '2px solid rgba(255,255,255,0.1)' }}>
+          🖼️
+        </button>
       </div>
 
       {/* Hidden canvas for photo capture */}

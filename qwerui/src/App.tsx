@@ -21,7 +21,7 @@ export default function App() {
   const [showHome, setShowHome] = useState(false);
   const [showOOBE, setShowOOBE] = useState(false);
   const [showBoot, setShowBoot] = useState(true);
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [theme, setTheme] = useState<'dark'>('dark');
 
   // Применяем тему к корневому элементу <html>
   useEffect(() => {
@@ -33,8 +33,7 @@ export default function App() {
   useEffect(() => {
     const oobeCompleted = localStorage.getItem('spidiphone_oobe_completed');
     if (oobeCompleted) {
-      const savedTheme = localStorage.getItem('spidiphone_theme') || 'dark';
-      setTheme(savedTheme as 'light' | 'dark');
+      setTheme('dark');
     }
   }, []);
 
@@ -61,11 +60,9 @@ export default function App() {
     }
   };
 
-  const handleOOBEComplete = (pin: string | null, selectedTheme: 'light' | 'dark') => {
-    setTheme(selectedTheme);
+  const handleOOBEComplete = (pin: string | null) => {
     if (pin) localStorage.setItem('spidiphone_pin', pin);
     localStorage.setItem('spidiphone_oobe_completed', 'true');
-    localStorage.setItem('spidiphone_theme', selectedTheme);
     setShowOOBE(false);
     setShowHome(true);
   };
@@ -96,9 +93,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex items-center justify-center overflow-hidden relative"
       style={{
-        background: theme === 'light'
-          ? 'radial-gradient(ellipse at 30% 40%, #f8f8f8 0%, #e0e0e0 50%, #d0d0d0 100%)'
-          : 'radial-gradient(ellipse at 30% 40%, #1a0a2e 0%, #0a0510 50%, #050505 100%)'
+        background: 'radial-gradient(ellipse at 30% 40%, #1a0a2e 0%, #0a0510 50%, #050505 100%)'
       }}>
 
       {/* Background ambient orbs */}
