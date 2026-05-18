@@ -43,14 +43,15 @@ jobs:
           cd qwerui
           npm run build
 
-      - name: Capacitor Android
+      - name: Add Capacitor Android
         run: |
           cd qwerui
-          if [ -d "android" ]; then
-            npx cap sync android
-          else
-            npx cap add android
-          fi
+          npx cap add android
+
+      - name: Sync Capacitor
+        run: |
+          cd qwerui
+          npx cap sync
 
       - name: Build Debug APK
         run: |
