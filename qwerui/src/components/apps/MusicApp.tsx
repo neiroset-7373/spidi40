@@ -1,138 +1,170 @@
-import { useState, useRef } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
+import '../../styles/MusicApp.css';
+
+interface Track {
+  id: string;
+  name: string;
+  artist: string;
+  url: string;
+}
 
 export default function MusicApp() {
+  const [tracks, setTracks] = useState<Track[]>(() => {
+    const saved = localStorage.getItem('spidi_music');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedFileName, setSelectedFileName] = useState<string>('Выберите трек');
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const [progress, setProgress] = useState(0);
+  const [volume, setVolume] = useState(0.7);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.type.startsWith('audio/')) {
-      setSelectedFile(file);
-      setSelectedFileName(file.name);
-      if (audioRef.current) {
-        audioRef.current.src = URL.createObjectURL(file);
-        audioRef.current.load();
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach(file => {
+      const url = URL.createObjectURL(file);
+      const track: Track = {
+        id: Date.now() + Math.random().toString(),
+        name: file.name.replace(/\.[^/.]+$/, ''),
+        artist: 'Локальный файл',
+        url,
+      };
+      setTracks(prev => {
+        const updated = [...prev, track];
+        localStorage.setItem('spidi_music', JSON.stringify(updated));
+        return updated;
+      });
+    });
+  };
+
+  const playTrack = (track: Track) => {
+    if (currentTrack?.id === track.id) {
+      if (isPlaying) {
+        audioRef.current?.pause();
+        setIsPlaying(false);
+      } else {
+        audioRef.current?.play();
+        setIsPlaying(true);
       }
+    } else {
+      setCurrentTrack(track);
+      setIsPlaying(true);
+      setProgress(0);
     }
   };
 
-  const togglePlay = () => {
-    if (!selectedFile) return;
-    if (isPlaying) {
-      audioRef.current?.pause();
-    } else {
-      audioRef.current?.play().catch(e => console.error('Playback failed:', e));
+  useEffect(() => {
+    if (currentTrack && audioRef.current) {
+      audioRef.current.src = currentTrack.url;
+      audioRef.current.play().catch(() => {});
     }
-    setIsPlaying(!isPlaying);
-  };
+  }, [currentTrack]);
 
   const handleTimeUpdate = () => {
     if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
+      const pct = (audioRef.current.currentTime / audioRef.current.duration) * 100;
+      setProgress(pct || 0);
     }
   };
 
-  const handleLoadedMetadata = () => {
-    if (audioRef.current) {
-      setDuration(audioRef.current.duration);
-    }
+  const handleEnded = () => {
+    setIsPlaying(false);
+    setProgress(0);
   };
 
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const time = parseFloat(e.target.value);
-    setCurrentTime(time);
-    if (audioRef.current) {
-      audioRef.current.currentTime = time;
+  const deleteTrack = (id: string) => {
+    setTracks(prev => {
+      const updated = prev.filter(t => t.id !== id);
+      localStorage.setItem('spidi_music', JSON.stringify(updated));
+      return updated;
+    });
+    if (currentTrack?.id === id) {
+      setCurrentTrack(null);
+      setIsPlaying(false);
     }
-  };
-
-  const formatTime = (time: number) => {
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-b from-purple-900 via-black to-black text-white p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <button className="text-white/60 text-2xl">‹</button>
-        <span className="text-sm font-medium">Теперь играет</span>
-        <button className="text-white/60 text-xl">…</button>
-      </div>
+    <div className="music-app">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="audio/*"
+        multiple
+        style={{ display: 'none' }}
+        onChange={handleFileSelect}
+      />
 
-      {/* File Input */}
-      <div className="mb-6">
-        <label className="flex items-center gap-3 px-4 py-3 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30 transition-all">
-          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-bold">
-            🎵
+      <div className="music-content">
+        {tracks.length === 0 ? (
+          <div className="empty-music">
+            <span className="empty-icon">🎵</span>
+            <span className="empty-text">Нет треков</span>
+            <span className="empty-subtext">Нажмите + чтобы добавить музыку</span>
           </div>
-          <div className="flex-1 text-left">
-            <div className="font-medium text-white">{selectedFileName}</div>
-            <div className="text-sm text-white/60">Нажмите, чтобы выбрать трек</div>
+        ) : (
+          <div className="track-list">
+            {tracks.map((track) => (
+              <div
+                key={track.id}
+                className={`track-item ${currentTrack?.id === track.id ? 'active' : ''}`}
+                onClick={() => playTrack(track)}
+              >
+                <div className="track-play">
+                  {currentTrack?.id === track.id && isPlaying ? '⏸' : '▶'}
+                </div>
+                <div className="track-info">
+                  <span className="track-name">{track.name}</span>
+                  <span className="track-artist">{track.artist}</span>
+                </div>
+                <button
+                  className="track-delete"
+                  onClick={(e) => { e.stopPropagation(); deleteTrack(track.id); }}
+                >
+                  🗑️
+                </button>
+              </div>
+            ))}
           </div>
-          <div className="text-white/40">›</div>
-        </label>
-        <input
-          type="file"
-          accept="audio/*"
-          onChange={handleFileChange}
-          className="hidden"
-        />
+        )}
       </div>
 
-      {/* Album Art */}
-      <div className="flex-1 flex items-center justify-center mb-8">
-        <div className="w-64 h-64 rounded-2xl overflow-hidden shadow-2xl"
-          style={{
-            background: 'linear-gradient(135deg, #7c3aed, #2563eb)',
-            boxShadow: '0 20px 60px rgba(124, 58, 237, 0.4)'
-          }}>
-          <img src="/wintophone/spidiphone_icons/src/public/system_icons/music_app.jpg" alt="Album" className="w-full h-full object-cover" />
+      {currentTrack && (
+        <div className="music-player">
+          <div className="player-info">
+            <span className="player-name">{currentTrack.name}</span>
+            <span className="player-artist">{currentTrack.artist}</span>
+          </div>
+          <div className="player-progress">
+            <div className="progress-bar">
+              <div className="progress-fill" style={{ width: `${progress}%` }} />
+            </div>
+          </div>
+          <div className="player-controls">
+            <button className="player-btn" onClick={() => setVolume(v => Math.max(0, v - 0.1))}>🔉</button>
+            <button className="player-btn play-btn" onClick={() => currentTrack && playTrack(currentTrack)}>
+              {isPlaying ? '⏸' : '▶'}
+            </button>
+            <button className="player-btn" onClick={() => setVolume(v => Math.min(1, v + 0.1))}>🔊</button>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Song Info */}
-      <div className="text-center mb-8">
-        <h2 className="text-xl font-semibold mb-2">{selectedFileName}</h2>
-        <p className="text-white/60">Музыкальное приложение Spidios</p>
-      </div>
+      <button className="add-music-btn" onClick={() => fileInputRef.current?.click()}>+</button>
 
-      {/* Progress */}
-      <div className="mb-6">
-        <div className="h-1 bg-white/20 rounded-full overflow-hidden mb-2">
-          <div className="h-full bg-white rounded-full transition-all duration-100"
-            style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }} />
-        </div>
-        <div className="flex justify-between text-xs text-white/40">
-          <span>{formatTime(currentTime)}</span>
-          <span>{formatTime(duration)}</span>
-        </div>
-      </div>
-
-      {/* Controls */}
-      <div className="flex justify-center items-center gap-8 mb-8">
-        <button className="text-white/60 text-2xl">⏮</button>
-        <button
-          onClick={togglePlay}
-          disabled={!selectedFile}
-          className="w-16 h-16 rounded-full bg-white text-black flex items-center justify-center text-2xl hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isPlaying ? '⏸' : '▶'}
-        </button>
-        <button className="text-white/60 text-2xl">⏭</button>
-      </div>
-
-      {/* Hidden Audio Element */}
       <audio
         ref={audioRef}
         onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onEnded={() => setIsPlaying(false)}
+        onEnded={handleEnded}
       />
     </div>
   );
