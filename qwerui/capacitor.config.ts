@@ -15,6 +15,12 @@ const config: CapacitorConfig = {
       keystoreAliasPassword: undefined,
       releaseType: 'APK',
     },
+    webContentsDebuggingEnabled: true,
+  },
+  plugins: {
+    Camera: {
+      photosAllowed: true,
+    },
   },
 };
 
