@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState } from 'react';
 import '../../styles/GalleryApp.css';
 
 export default function GalleryApp() {
@@ -67,3 +67,4 @@ export default function GalleryApp() {
     </div>
   );
 }
+

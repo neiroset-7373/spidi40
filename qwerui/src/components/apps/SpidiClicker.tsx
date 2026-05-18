@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+﻿import {} from 'react';
 
 export default function SpidiClicker() {
   return (
@@ -13,3 +13,4 @@ export default function SpidiClicker() {
     </div>
   );
 }
+
