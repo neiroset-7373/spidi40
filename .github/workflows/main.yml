@@ -43,6 +43,11 @@ jobs:
           cd qwerui
           npm run build
 
+      - name: Remove old Android platform
+        run: |
+          cd qwerui
+          rm -rf android
+
       - name: Init Capacitor Android
         run: |
           cd qwerui
