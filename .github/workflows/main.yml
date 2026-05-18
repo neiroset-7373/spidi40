@@ -58,23 +58,28 @@ jobs:
           cd qwerui/android
           ./gradlew assembleDebug
 
+      - name: Rename APK
+        run: |
+          cd qwerui/android/app/build/outputs/apk/debug
+          mv app-debug.apk spidi-clicker-wintozo.apk
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: spidiphone-debug-apk
-          path: qwerui/android/app/build/outputs/apk/debug/app-debug.apk
+          name: spidi-clicker-wintozo-apk
+          path: qwerui/android/app/build/outputs/apk/debug/spidi-clicker-wintozo.apk
           retention-days: 30
 
       - name: Upload to GitHub Releases
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          files: qwerui/android/app/build/outputs/apk/debug/app-debug.apk
+          files: qwerui/android/app/build/outputs/apk/debug/spidi-clicker-wintozo.apk
           tag_name: v${{ github.run_number }}
-          name: SpidiPhone v2.110.001 Build ${{ github.run_number }}
+          name: Spidi Clicker Wintozo v${{ github.run_number }}
           body: |
             Автоматическая сборка APK
-            - Версия: 2.110.001
-            - Build: ${{ github.run_number }}
+            - Версия: ${{ github.run_number }}
+            - Имя файла: spidi-clicker-wintozo.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

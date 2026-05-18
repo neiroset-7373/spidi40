@@ -115,9 +115,9 @@ export default function App() {
       {/* Phone Frame */}
       <div className="relative animate-float"
         style={{
-          width: '390px',
-          height: '844px',
-          borderRadius: '54px',
+          width: '320px',
+          height: '690px',
+          borderRadius: '44px',
           background: 'linear-gradient(160deg, #2e2e2e 0%, #1a1a1a 40%, #111 100%)',
           boxShadow: [
             '0 0 0 1px rgba(255,255,255,0.08)',
