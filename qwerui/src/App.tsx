@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
+import { FontProvider, useFont } from './contexts/FontContext';
 import LockScreen from './components/LockScreen';
 import HomeScreen from './components/HomeScreen';
 import AppShell from './components/AppShell';
@@ -11,38 +12,21 @@ import SpidiClicker from './components/apps/SpidiClicker';
 import CameraApp from './components/apps/CameraApp';
 import GalleryApp from './components/apps/GalleryApp';
 import MusicApp from './components/apps/MusicApp';
-
 import DeepSeekApp from './components/apps/DeepSeekApp';
 
 export type AppName = 'phone' | 'settings' | 'messages' | 'clicker' | 'camera' | 'gallery' | 'music' | 'deepseek' | null;
 
-export default function App() {
+function AppContent() {
+  const { fontSizeValue } = useFont();
   const [locked, setLocked] = useState(true);
   const [activeApp, setActiveApp] = useState<AppName>(null);
   const [appVisible, setAppVisible] = useState(false);
   const [showHome, setShowHome] = useState(false);
   const [showOOBE, setShowOOBE] = useState(false);
   const [showBoot, setShowBoot] = useState(true);
-  const [theme, setTheme] = useState<'dark'>('dark');
-
-  // Применяем тему к корневому элементу <html>
-  useEffect(() => {
-    const root = document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(theme);
-  }, [theme]);
 
   useEffect(() => {
-    const oobeCompleted = localStorage.getItem('spidiphone_oobe_completed');
-    if (oobeCompleted) {
-      setTheme('dark');
-    }
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowBoot(false);
-    }, 11000);
+    const timer = setTimeout(() => setShowBoot(false), 11000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -95,11 +79,12 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex items-center justify-center overflow-hidden relative"
-      style={{
-        background: 'radial-gradient(ellipse at 30% 40%, #1a0a2e 0%, #0a0510 50%, #050505 100%)'
-      }}>
+      style={{ background: 'radial-gradient(ellipse at 30% 40%, #1a0a2e 0%, #0a0510 50%, #050505 100%)' }}>
+      <style>{`
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .animate-float { animation: float 4s ease-in-out infinite; }
+      `}</style>
 
-      {/* Background ambient orbs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute w-96 h-96 rounded-full opacity-20"
           style={{ background: 'radial-gradient(circle, #7c3aed, transparent)', top: '10%', left: '5%', filter: 'blur(60px)' }} />
@@ -109,113 +94,64 @@ export default function App() {
           style={{ background: 'radial-gradient(circle, #ec4899, transparent)', top: '60%', left: '15%', filter: 'blur(40px)' }} />
       </div>
 
-      {/* Phone info label */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center pointer-events-none">
         <div className="text-white/20 text-xs tracking-[0.4em] font-light">SPIDIOS • ANDROID 16</div>
         <div className="text-white/10 text-xs tracking-[0.3em] mt-0.5">SPIDIPHONE 1</div>
       </div>
 
-      {/* Phone Frame */}
       <div className="relative animate-float"
         style={{
           width: '320px',
           height: '690px',
           borderRadius: '44px',
           background: 'linear-gradient(160deg, #2e2e2e 0%, #1a1a1a 40%, #111 100%)',
-          boxShadow: [
-            '0 0 0 1px rgba(255,255,255,0.08)',
-            '0 0 0 2px rgba(0,0,0,0.8)',
-            '0 0 80px rgba(120,60,220,0.25)',
-            '0 60px 120px rgba(0,0,0,0.9)',
-            'inset 0 1px 0 rgba(255,255,255,0.12)',
-            'inset 0 -1px 0 rgba(255,255,255,0.04)',
-          ].join(', '),
+          boxShadow: '0 0 0 1px rgba(255,255,255,0.08), 0 0 0 2px rgba(0,0,0,0.8), 0 0 80px rgba(120,60,220,0.25), 0 60px 120px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(255,255,255,0.04)',
         }}>
-
-        {/* Camera highlight */}
         <div className="absolute top-0 left-0 right-0 h-24 rounded-t-[54px] pointer-events-none"
           style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.03), transparent)' }} />
 
-        {/* Inner screen */}
-        <div className="absolute inset-[3px] rounded-[51px] overflow-hidden"
-          style={{ background: '#000' }}>
-
-          {/* Dynamic Island */}
+        <div className="absolute inset-[3px] rounded-[51px] overflow-hidden" style={{ background: '#000', fontSize: fontSizeValue }}>
           <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50"
             style={{
-              width: '126px',
-              height: '37px',
-              background: '#000',
-              borderRadius: '20px',
+              width: '126px', height: '37px', background: '#000', borderRadius: '20px',
               boxShadow: '0 0 0 1px rgba(255,255,255,0.04), 0 2px 12px rgba(0,0,0,0.8)',
             }}>
-            {/* Camera dot */}
             <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full"
               style={{ background: '#0d1117', border: '1.5px solid rgba(255,255,255,0.08)', boxShadow: 'inset 0 0 4px rgba(100,200,255,0.15)' }} />
           </div>
 
-          {/* Boot Screen - 11 seconds on every launch */}
-          {showBoot && (
-            <BootScreen onComplete={() => setLocked(true)} />
-          )}
+          {showBoot && <BootScreen onComplete={() => setLocked(true)} />}
 
-          {/* Lock Screen - shown after boot */}
-          <div
-            className="absolute inset-0 transition-all duration-700"
-            style={{
-              opacity: (!showBoot && locked && !showOOBE) ? 1 : 0,
-              transform: (!showBoot && locked && !showOOBE) ? 'scale(1)' : 'scale(1.06)',
-              pointerEvents: (!showBoot && locked && !showOOBE) ? 'auto' : 'none',
-              zIndex: (!showBoot && locked && !showOOBE) ? 40 : -1,
-              transitionTimingFunction: 'cubic-bezier(0.4,0,0.2,1)',
-            }}>
+          <div className="absolute inset-0 transition-all duration-700"
+            style={{ opacity: (!showBoot && locked && !showOOBE) ? 1 : 0, transform: (!showBoot && locked && !showOOBE) ? 'scale(1)' : 'scale(1.06)', pointerEvents: (!showBoot && locked && !showOOBE) ? 'auto' : 'none', zIndex: (!showBoot && locked && !showOOBE) ? 40 : -1 }}>
             <LockScreen onUnlock={unlockPhone} skipPinOnFirstRun={!localStorage.getItem('spidiphone_oobe_completed')} />
           </div>
 
-          {/* Home Screen */}
-          <div
-            className="absolute inset-0 transition-all duration-500"
-            style={{
-              opacity: showHome ? 1 : 0,
-              transform: showHome ? 'scale(1)' : 'scale(0.95)',
-              zIndex: 10,
-              transitionTimingFunction: 'cubic-bezier(0.34,1.2,0.64,1)',
-            }}>
+          <div className="absolute inset-0 transition-all duration-500"
+            style={{ opacity: showHome ? 1 : 0, transform: showHome ? 'scale(1)' : 'scale(0.95)', zIndex: 10 }}>
             <HomeScreen onOpenApp={openApp} />
           </div>
 
-          {/* OOBE - shown after unlock if first run */}
-          {showOOBE && (
-            <div className="absolute inset-0 z-50">
-              <OOBE onComplete={handleOOBEComplete} />
-            </div>
-          )}
+          {showOOBE && <div className="absolute inset-0 z-50"><OOBE onComplete={handleOOBEComplete} /></div>}
 
-          {/* App Layer */}
           {activeApp && (
-            <AppShell
-              appName={activeApp}
-              visible={appVisible}
-              onClose={closeApp}>
-              {renderApp()}
-            </AppShell>
+            <AppShell appName={activeApp} visible={appVisible} onClose={closeApp}>{renderApp()}</AppShell>
           )}
         </div>
 
-        {/* Physical buttons */}
-        {/* Power */}
-        <div className="absolute right-0 top-28 w-[3px] h-16 rounded-r-[2px]"
-          style={{ background: 'linear-gradient(180deg, #3a3a3a, #2a2a2a)', boxShadow: '1px 0 3px rgba(0,0,0,0.5)' }} />
-        {/* Volume up */}
-        <div className="absolute left-0 top-24 w-[3px] h-10 rounded-l-[2px]"
-          style={{ background: 'linear-gradient(180deg, #3a3a3a, #2a2a2a)', boxShadow: '-1px 0 3px rgba(0,0,0,0.5)' }} />
-        {/* Volume down */}
-        <div className="absolute left-0 top-36 w-[3px] h-14 rounded-l-[2px]"
-          style={{ background: 'linear-gradient(180deg, #3a3a3a, #2a2a2a)', boxShadow: '-1px 0 3px rgba(0,0,0,0.5)' }} />
-        {/* Silent switch */}
-        <div className="absolute left-0 top-52 w-[3px] h-8 rounded-l-[2px]"
-          style={{ background: 'linear-gradient(180deg, #3a3a3a, #2a2a2a)', boxShadow: '-1px 0 3px rgba(0,0,0,0.5)' }} />
+        <div className="absolute right-0 top-28 w-[3px] h-16 rounded-r-[2px]" style={{ background: 'linear-gradient(180deg, #3a3a3a, #2a2a2a)' }} />
+        <div className="absolute left-0 top-24 w-[3px] h-10 rounded-l-[2px]" style={{ background: 'linear-gradient(180deg, #3a3a3a, #2a2a2a)' }} />
+        <div className="absolute left-0 top-36 w-[3px] h-14 rounded-l-[2px]" style={{ background: 'linear-gradient(180deg, #3a3a3a, #2a2a2a)' }} />
+        <div className="absolute left-0 top-52 w-[3px] h-8 rounded-l-[2px]" style={{ background: 'linear-gradient(180deg, #3a3a3a, #2a2a2a)' }} />
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <FontProvider>
+      <AppContent />
+    </FontProvider>
   );
 }

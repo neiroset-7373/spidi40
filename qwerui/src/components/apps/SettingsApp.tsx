@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+﻿import { useState, useCallback } from 'react';
+import { useFont } from '../../contexts/FontContext';
 
 interface SettingItem {
   label: string;
@@ -10,36 +11,16 @@ interface SettingItem {
 
 function ToggleSwitch({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
   return (
-    <div
-      onClick={() => onChange(!on)}
-      className="relative cursor-pointer transition-all"
-      style={{
-        width: '48px',
-        height: '28px',
-        borderRadius: '14px',
-        background: on ? 'linear-gradient(135deg, #667eea, #764ba2)' : 'rgba(255,255,255,0.15)',
-        transition: 'background 0.3s ease',
-      }}>
-      <div
-        className="absolute top-1"
-        style={{
-          width: '20px',
-          height: '20px',
-          borderRadius: '50%',
-          background: '#fff',
-          left: on ? '24px' : '4px',
-          transition: 'left 0.3s cubic-bezier(0.34,1.56,0.64,1)',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-        }} />
+    <div onClick={() => onChange(!on)} className="relative cursor-pointer" style={{ width: '48px', height: '28px', borderRadius: '14px', background: on ? 'linear-gradient(135deg, #667eea, #764ba2)' : 'rgba(255,255,255,0.15)', transition: 'background 0.3s ease' }}>
+      <div className="absolute top-1" style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#fff', left: on ? '24px' : '4px', transition: 'left 0.3s cubic-bezier(0.34,1.56,0.64,1)', boxShadow: '0 2px 6px rgba(0,0,0,0.3)' }} />
     </div>
   );
 }
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
-    <div className="absolute inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm">
-      <div className="absolute inset-0" onClick={onClose} />
-      <div className="relative w-full bg-[#1a1a2e] rounded-t-3xl p-6 pb-10" style={{ animation: 'slideUp 0.3s ease' }}>
+    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div className="relative w-full bg-[#1a1a2e] rounded-t-3xl p-6 pb-10" style={{ animation: 'slideUp 0.3s ease' }} onClick={e => e.stopPropagation()}>
         <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-4" />
         <h3 className="text-white text-lg font-semibold mb-4 text-center">{title}</h3>
         {children}
@@ -49,23 +30,14 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
 }
 
 export default function SettingsApp() {
-  const [toggles, setToggles] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {
-      'Wi-Fi': true,
-      'Bluetooth': false,
-      'Авиарежим': false,
-      'VPN': false,
-      'Автояркость': true,
-      'Отпечаток пальца': true,
-      'Распознавание лица': false,
-    };
-    return initial;
-  });
-
+  const { fontSize, setFontSize } = useFont();
+  const [toggles, setToggles] = useState<Record<string, boolean>>(() => ({
+    'Wi-Fi': true, 'Bluetooth': false, 'Авиарежим': false, 'VPN': false,
+    'Автояркость': true, 'Отпечаток пальца': true, 'Распознавание лица': false,
+  }));
   const [brightness, setBrightness] = useState(70);
   const [volume, setVolume] = useState(60);
   const [activeModal, setActiveModal] = useState<string | null>(null);
-  const [fontSize, setFontSize] = useState('Средний');
   const [updateProgress, setUpdateProgress] = useState(0);
   const [updateComplete, setUpdateComplete] = useState(false);
   const [resetConfirm, setResetConfirm] = useState(false);
@@ -88,10 +60,7 @@ export default function SettingsApp() {
       const passed = Date.now() - start;
       const pct = Math.min(100, (passed / 13000) * 100);
       setUpdateProgress(pct);
-      if (passed >= 13000) {
-        clearInterval(interval);
-        setUpdateComplete(true);
-      }
+      if (passed >= 13000) { clearInterval(interval); setUpdateComplete(true); }
     }, 200);
   }, []);
 
@@ -103,11 +72,7 @@ export default function SettingsApp() {
       const passed = Date.now() - start;
       const pct = Math.min(100, (passed / 5000) * 100);
       setResetProgress(pct);
-      if (passed >= 5000) {
-        clearInterval(interval);
-        localStorage.clear();
-        window.location.reload();
-      }
+      if (passed >= 5000) { clearInterval(interval); localStorage.clear(); window.location.reload(); }
     }, 200);
   }, []);
 
@@ -172,9 +137,7 @@ export default function SettingsApp() {
     <div className="h-full overflow-y-auto relative" style={{ background: '#0f0f1a' }}>
       <style>{`@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }`}</style>
 
-      {/* Profile */}
-      <div className="mx-4 mt-3 mb-4 p-4 rounded-3xl flex items-center gap-4"
-        style={{ background: 'linear-gradient(135deg, rgba(102,126,234,0.2), rgba(118,75,162,0.2))', border: '1px solid rgba(102,126,234,0.3)' }}>
+      <div className="mx-4 mt-3 mb-4 p-4 rounded-3xl flex items-center gap-4" style={{ background: 'linear-gradient(135deg, rgba(102,126,234,0.2), rgba(118,75,162,0.2))', border: '1px solid rgba(102,126,234,0.3)' }}>
         <div className="w-16 h-16 rounded-full" style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)' }} />
         <div>
           <div className="text-white font-bold text-lg">Spidi User</div>
@@ -183,7 +146,6 @@ export default function SettingsApp() {
         </div>
       </div>
 
-      {/* Brightness & Volume */}
       <div className="mx-4 mb-4 p-4 rounded-3xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="mb-4">
           <div className="flex justify-between items-center mb-2">
@@ -191,10 +153,7 @@ export default function SettingsApp() {
             <span className="text-white/40 text-xs">{brightness}%</span>
           </div>
           <div className="relative h-2 rounded-full overflow-hidden cursor-pointer" style={{ background: 'rgba(255,255,255,0.1)' }}
-            onClick={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              setBrightness(Math.max(5, Math.min(100, Math.round(((e.clientX - rect.left) / rect.width) * 100))));
-            }}>
+            onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); setBrightness(Math.max(5, Math.min(100, Math.round(((e.clientX - rect.left) / rect.width) * 100)))); }}>
             <div className="h-full rounded-full transition-all" style={{ width: `${brightness}%`, background: 'linear-gradient(90deg, #f7971e, #ffd200)' }} />
           </div>
         </div>
@@ -204,23 +163,18 @@ export default function SettingsApp() {
             <span className="text-white/40 text-xs">{volume}%</span>
           </div>
           <div className="relative h-2 rounded-full overflow-hidden cursor-pointer" style={{ background: 'rgba(255,255,255,0.1)' }}
-            onClick={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              setVolume(Math.max(0, Math.min(100, Math.round(((e.clientX - rect.left) / rect.width) * 100))));
-            }}>
+            onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); setVolume(Math.max(0, Math.min(100, Math.round(((e.clientX - rect.left) / rect.width) * 100)))); }}>
             <div className="h-full rounded-full transition-all" style={{ width: `${volume}%`, background: 'linear-gradient(90deg, #11998e, #38ef7d)' }} />
           </div>
         </div>
       </div>
 
-      {/* Sections */}
       {sections.map(section => (
         <div key={section.title} className="mx-4 mb-3">
           <div className="text-white/40 text-xs uppercase tracking-widest mb-2 px-1">{section.title}</div>
           <div className="rounded-3xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
             {section.items.map((item, idx) => (
-              <div key={item.label}
-                onClick={() => handleItemClick(item.label)}
+              <div key={item.label} onClick={() => handleItemClick(item.label)}
                 className="flex items-center gap-3 px-4 py-3.5 transition-all active:bg-white/5 cursor-pointer"
                 style={{ borderBottom: idx < section.items.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
                 <div className="w-9 h-9 rounded-xl flex-shrink-0" style={{ background: item.gradient }} />
@@ -239,28 +193,25 @@ export default function SettingsApp() {
         </div>
       ))}
 
-      {/* Version */}
       <div className="text-center py-6 pb-8">
         <div className="text-white/20 text-xs">Spidios • Android 16 • Spidiphone 1</div>
         <div className="text-white/15 text-xs mt-0.5">Версия 16.0.1 (Spidi Build)</div>
       </div>
 
-      {/* Modal: Font Size */}
+      {/* Font Size Modal */}
       {activeModal === 'fontSize' && (
         <Modal title="Размер шрифта" onClose={() => setActiveModal(null)}>
           <div className="space-y-2">
-            {['Маленький', 'Средний', 'Крупный', 'Очень крупный'].map((size) => (
+            {(['Маленький', 'Средний', 'Крупный', 'Очень крупный'] as const).map(size => (
               <button key={size} onClick={() => { setFontSize(size); setActiveModal(null); }}
                 className={`w-full px-4 py-3 rounded-xl text-left transition-all ${fontSize === size ? 'bg-purple-600 text-white' : 'bg-white/5 text-white/70 hover:bg-white/10'}`}
-                style={{ fontSize: size === 'Маленький' ? '12px' : size === 'Средний' ? '14px' : size === 'Крупный' ? '18px' : '22px' }}>
-                {size}
-              </button>
+                style={{ fontSize: size === 'Маленький' ? '12px' : size === 'Средний' ? '14px' : size === 'Крупный' ? '18px' : '22px' }}>{size}</button>
             ))}
           </div>
         </Modal>
       )}
 
-      {/* Modal: Updates */}
+      {/* Update Modal */}
       {activeModal === 'update' && (
         <Modal title="Проверка обновлений" onClose={() => updateComplete && setActiveModal(null)}>
           {!updateComplete ? (
@@ -279,7 +230,6 @@ export default function SettingsApp() {
               <div className="text-center mb-4">
                 <div className="text-4xl mb-2">✅</div>
                 <div className="text-white text-sm font-semibold">Обновлений не найдено</div>
-                <div className="text-white/50 text-xs mt-1">Установлена последняя версия</div>
               </div>
               <button onClick={() => setActiveModal(null)} className="w-full py-3 bg-purple-600 rounded-xl text-white">ОК</button>
             </>
@@ -287,7 +237,7 @@ export default function SettingsApp() {
         </Modal>
       )}
 
-      {/* Modal: Wi-Fi */}
+      {/* Wi-Fi Modal */}
       {activeModal === 'wifi' && (
         <Modal title="Wi-Fi сети" onClose={() => setActiveModal(null)}>
           <div className="mb-4 flex items-center justify-between">
@@ -295,25 +245,23 @@ export default function SettingsApp() {
             <ToggleSwitch on={toggles['Wi-Fi']} onChange={v => setToggles(prev => ({ ...prev, 'Wi-Fi': v }))} />
           </div>
           <div className="space-y-2 max-h-64 overflow-y-auto">
-            {wifiNetworks.map((network) => (
-              <button key={network.name} onClick={() => setConnectedWifi(network.name)}
-                className={`w-full px-4 py-3 rounded-xl flex items-center justify-between transition-all ${connectedWifi === network.name ? 'bg-purple-600 text-white' : 'bg-white/5 text-white/70 hover:bg-white/10'}`}>
+            {wifiNetworks.map(n => (
+              <button key={n.name} onClick={() => setConnectedWifi(n.name)}
+                className={`w-full px-4 py-3 rounded-xl flex items-center justify-between transition-all ${connectedWifi === n.name ? 'bg-purple-600 text-white' : 'bg-white/5 text-white/70 hover:bg-white/10'}`}>
                 <div className="flex items-center gap-3">
                   <div className="flex items-end gap-[2px] h-4">
-                    {[2,4,6,8].map((h,i) => (
-                      <div key={i} className="w-[2px] rounded-[1px]" style={{ height: `${h}px`, background: i < network.signal ? 'currentColor' : 'rgba(255,255,255,0.2)' }} />
-                    ))}
+                    {[2,4,6,8].map((h,i) => <div key={i} className="w-[2px] rounded-[1px]" style={{ height: `${h}px`, background: i < n.signal ? 'currentColor' : 'rgba(255,255,255,0.2)' }} />)}
                   </div>
-                  <span className="font-medium">{network.name}</span>
+                  <span className="font-medium">{n.name}</span>
                 </div>
-                {connectedWifi === network.name && <span>✓</span>}
+                {connectedWifi === n.name && <span>✓</span>}
               </button>
             ))}
           </div>
         </Modal>
       )}
 
-      {/* Modal: Reset */}
+      {/* Reset Modal */}
       {activeModal === 'reset' && (
         <Modal title="Сброс настроек" onClose={() => !resetProgress && setActiveModal(null)}>
           {!resetConfirm ? (
