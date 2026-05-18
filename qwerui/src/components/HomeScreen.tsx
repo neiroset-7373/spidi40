@@ -11,6 +11,7 @@ const apps: { id: AppName; label: string; gradient: string }[] = [
   { id: 'camera', label: 'Камера', gradient: 'linear-gradient(135deg, #f093fb, #f5576c)' },
   { id: 'gallery', label: 'Галерея', gradient: 'linear-gradient(135deg, #4facfe, #00f2fe)' },
   { id: 'clicker', label: 'Spidi Clicker', gradient: 'linear-gradient(135deg, #fa709a, #fee140)' },
+  { id: 'deepseek', label: 'DeepSeek', gradient: 'linear-gradient(135deg, #1a73e8, #4285f4)' },
   { id: 'music', label: 'Музыка', gradient: 'linear-gradient(135deg, #7c3aed, #2563eb)' },
   { id: 'settings', label: 'Настройки', gradient: 'linear-gradient(135deg, #a8a8a8, #5a5a5a)' },
 ];
@@ -62,7 +63,7 @@ export default function HomeScreen({ onOpenApp }: HomeScreenProps) {
           <svg width="16" height="12" viewBox="0 0 24 18" fill="none">
             <path d="M12 14.5a2 2 0 110 4 2 2 0 010-4z" fill="white"/>
             <path d="M7 10.5C8.7 8.8 10.2 8 12 8s3.3.8 5 2.5" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"/>
-            <path d="M3 6.5C6.1 3.3 8.9 2 12 2s5.9 1.3 9 4.5" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"/>
+            <path d="M3 6.5C6.1 3.3 8.9 2 12 2s5.9 1.! 3 9 4.5" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"/>
           </svg>
           {/* Battery */}
           <img
@@ -183,6 +184,7 @@ function AppIcon({ app, pressed, onPress, size = 'md' }: AppIconProps) {
               app.id === 'camera' ? 'camera.webp' :
               app.id === 'gallery' ? 'gallery.jpg' :
               app.id === 'music' ? 'music_app.jpg' :
+              app.id === 'deepseek' ? '../other_applications/logo chat.deepseek.com.png' :
               app.id === 'settings' ? 'settings.webp' : ''}`}
         alt={app.label}
         className={`${iconSize} rounded-2xl shadow-lg object-cover`}

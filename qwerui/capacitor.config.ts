@@ -21,6 +21,12 @@ const config: CapacitorConfig = {
     Camera: {
       photosAllowed: true,
     },
+    Filesystem: {
+      enabled: true,
+    },
+    Media: {
+      enabled: true,
+    },
   },
 };
 

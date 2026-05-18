@@ -12,7 +12,9 @@ import CameraApp from './components/apps/CameraApp';
 import GalleryApp from './components/apps/GalleryApp';
 import MusicApp from './components/apps/MusicApp';
 
-export type AppName = 'phone' | 'settings' | 'messages' | 'clicker' | 'camera' | 'gallery' | 'music' | null;
+import DeepSeekApp from './components/apps/DeepSeekApp';
+
+export type AppName = 'phone' | 'settings' | 'messages' | 'clicker' | 'camera' | 'gallery' | 'music' | 'deepseek' | null;
 
 export default function App() {
   const [locked, setLocked] = useState(true);
@@ -86,6 +88,7 @@ export default function App() {
       case 'camera': return <CameraApp />;
       case 'gallery': return <GalleryApp />;
       case 'music': return <MusicApp />;
+      case 'deepseek': return <DeepSeekApp />;
       default: return null;
     }
   };
@@ -166,7 +169,7 @@ export default function App() {
               zIndex: (!showBoot && locked && !showOOBE) ? 40 : -1,
               transitionTimingFunction: 'cubic-bezier(0.4,0,0.2,1)',
             }}>
-            <LockScreen onUnlock={unlockPhone} />
+            <LockScreen onUnlock={unlockPhone} skipPinOnFirstRun={!localStorage.getItem('spidiphone_oobe_completed')} />
           </div>
 
           {/* Home Screen */}

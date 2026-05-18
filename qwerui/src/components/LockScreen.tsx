@@ -1,21 +1,28 @@
 import { useState, useEffect } from 'react';
+import PinCodeWintozo from './PinCodeWintozo';
 
 interface LockScreenProps {
   onUnlock: () => void;
+  skipPinOnFirstRun?: boolean;
 }
 
-export default function LockScreen({ onUnlock }: LockScreenProps) {
+export default function LockScreen({ onUnlock, skipPinOnFirstRun = false }: LockScreenProps) {
   const [time, setTime] = useState(new Date());
   const [swiping, setSwiping] = useState(false);
   const [swipeY, setSwipeY] = useState(0);
   const [startY, setStartY] = useState(0);
   const [showPinEntry, setShowPinEntry] = useState(false);
-  const [pinInput, setPinInput] = useState('');
-  const [error, setError] = useState(false);
+  const [hasPin, setHasPin] = useState(false);
 
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(t);
+  }, []);
+
+  // Check if PIN is set
+  useEffect(() => {
+    const savedPin = localStorage.getItem('spidiphone_pin');
+    setHasPin(!!savedPin && savedPin.length === 4);
   }, []);
 
   const formatTime = (d: Date) =>
@@ -39,39 +46,22 @@ export default function LockScreen({ onUnlock }: LockScreenProps) {
 
   const handleTouchEnd = () => {
     if (swipeY > 80) {
-      setShowPinEntry(true);
+      // If no PIN set or first run, unlock directly
+      if (!hasPin || skipPinOnFirstRun) {
+        onUnlock();
+      } else {
+        setShowPinEntry(true);
+      }
     } else {
       setSwipeY(0);
     }
     setSwiping(false);
   };
 
-  const handlePinSubmit = () => {
-    const savedPin = localStorage.getItem('spidiphone_pin');
-    if (!savedPin || pinInput === savedPin) {
-      onUnlock();
-    } else {
-      setError(true);
-      setPinInput('');
-      setTimeout(() => setError(false), 500);
-    }
+  const handlePinSuccess = () => {
+    setShowPinEntry(false);
+    onUnlock();
   };
-
-  const handlePinKey = (num: string) => {
-    if (pinInput.length < 4) {
-      setPinInput(pinInput + num);
-    }
-  };
-
-  const handlePinDelete = () => {
-    setPinInput(pinInput.slice(0, -1));
-  };
-
-  useEffect(() => {
-    if (pinInput.length === 4 && !showPinEntry) {
-      setShowPinEntry(true);
-    }
-  }, [pinInput, showPinEntry]);
 
   return (
     <div
@@ -118,36 +108,16 @@ export default function LockScreen({ onUnlock }: LockScreenProps) {
       </div>
 
       {/* PIN Entry Overlay */}
-      {showPinEntry && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90">
-          <div className="text-white text-xl mb-4">Введите PIN</div>
-          <div className={`flex gap-3 mb-6 ${error ? 'animate-pulse' : ''}`}>
-            {[0,1,2,3].map(i => (
-              <div key={i} className={`w-4 h-4 rounded-full transition-all ${
-                i < pinInput.length ? 'bg-white scale-110' : 'bg-white/20'
-              }`} />
-            ))}
-          </div>
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            {[1,2,3,4,5,6,7,8,9].map(num => (
-              <button
-                key={num}
-                onClick={() => handlePinKey(num.toString())}
-                className="w-16 h-16 rounded-full text-white text-2xl font-light transition-all active:scale-90"
-                style={{ background: 'rgba(255,255,255,0.15)' }}>
-                {num}
-              </button>
-            ))}
-            <button onClick={handlePinDelete} className="w-16 h-16 rounded-full text-white/60 text-xl transition-all active:scale-90"
-              style={{ background: 'rgba(255,255,255,0.1)' }}>⌫</button>
-            <button onClick={() => handlePinKey('0')} className="w-16 h-16 rounded-full text-white text-2xl font-light transition-all active:scale-90"
-              style={{ background: 'rgba(255,255,255,0.15)' }}>0</button>
-            <button onClick={handlePinSubmit} className="w-16 h-16 rounded-full text-white/60 text-xl transition-all active:scale-90"
-              style={{ background: 'rgba(255,255,255,0.1)' }}>✓</button>
-          </div>
-          <button onClick={() => { setShowPinEntry(false); setPinInput(''); }}
-            className="text-white/40 text-sm mt-4">Отмена</button>
-        </div>
+      {showPinEntry && hasPin && (
+        <PinCodeWintozo
+          onSuccess={handlePinSuccess}
+          onCancel={() => {
+            setShowPinEntry(false);
+            setSwipeY(0);
+          }}
+          title="Разблокировка"
+          subtitle="Введите ваш PIN-код"
+        />
       )}
 
       {/* Time */}
