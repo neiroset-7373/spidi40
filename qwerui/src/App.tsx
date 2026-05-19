@@ -12,9 +12,9 @@ import SpidiClicker from './components/apps/SpidiClicker';
 import CameraApp from './components/apps/CameraApp';
 import GalleryApp from './components/apps/GalleryApp';
 import MusicApp from './components/apps/MusicApp';
-import DeepSeekApp from './components/apps/DeepSeekApp';
+import GigaChatApp from './components/apps/GigaChatApp';
 
-export type AppName = 'phone' | 'settings' | 'messages' | 'clicker' | 'camera' | 'gallery' | 'music' | 'deepseek' | null;
+export type AppName = 'phone' | 'settings' | 'messages' | 'clicker' | 'camera' | 'gallery' | 'music' | 'gigachat' | null;
 
 function AppContent() {
   const { fontSizeValue } = useFont();
@@ -72,7 +72,7 @@ function AppContent() {
       case 'camera': return <CameraApp />;
       case 'gallery': return <GalleryApp />;
       case 'music': return <MusicApp />;
-      case 'deepseek': return <DeepSeekApp />;
+      case 'gigachat': return <GigaChatApp />;
       default: return null;
     }
   };
