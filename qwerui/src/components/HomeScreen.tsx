@@ -8,10 +8,8 @@ interface HomeScreenProps {
 const apps: { id: AppName; label: string; gradient: string }[] = [
   { id: 'phone', label: 'Звонилка', gradient: 'linear-gradient(135deg, #11998e, #38ef7d)' },
   { id: 'messages', label: 'Сообщения', gradient: 'linear-gradient(135deg, #667eea, #764ba2)' },
-  { id: 'camera', label: 'Камера', gradient: 'linear-gradient(135deg, #f093fb, #f5576c)' },
   { id: 'gallery', label: 'Галерея', gradient: 'linear-gradient(135deg, #4facfe, #00f2fe)' },
   { id: 'clicker', label: 'Spidi Clicker', gradient: 'linear-gradient(135deg, #fa709a, #fee140)' },
-  { id: 'gigachat', label: 'GigaChat', gradient: 'linear-gradient(135deg, #0088cc, #005588)' },
   { id: 'music', label: 'Музыка', gradient: 'linear-gradient(135deg, #7c3aed, #2563eb)' },
   { id: 'settings', label: 'Настройки', gradient: 'linear-gradient(135deg, #a8a8a8, #5a5a5a)' },
 ];
@@ -164,10 +162,8 @@ function AppIcon({ app, pressed, onPress, size = 'md' }: AppIconProps) {
   const iconPath = app.id === 'phone' ? 'zvonki.png' :
     app.id === 'messages' ? 'messenges.png' :
     app.id === 'clicker' ? 'spidi_clicker_icon_for_apps.png' :
-    app.id === 'camera' ? 'camera.webp' :
     app.id === 'gallery' ? 'gallery.jpg' :
     app.id === 'music' ? 'music_app.jpg' :
-    app.id === 'gigachat' ? 'other_applications/logo_gigachat.png' :
     app.id === 'settings' ? 'settings.webp' : '';
 
   return (

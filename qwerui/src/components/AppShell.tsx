@@ -13,10 +13,8 @@ const appTitles: Record<NonNullable<AppName>, string> = {
   settings: 'Настройки',
   messages: 'Сообщения',
   clicker: 'Spidi Clicker',
-  camera: 'Камера',
   gallery: 'Галерея',
   music: 'Музыка',
-  gigachat: 'GigaChat',
 };
 
 const appColors: Record<NonNullable<AppName>, string> = {
@@ -24,10 +22,8 @@ const appColors: Record<NonNullable<AppName>, string> = {
   settings: 'linear-gradient(135deg, #a8a8a8, #5a5a5a)',
   messages: 'linear-gradient(135deg, #667eea, #764ba2)',
   clicker: 'linear-gradient(135deg, #fa709a, #fee140)',
-  camera: 'linear-gradient(135deg, #f093fb, #f5576c)',
   gallery: 'linear-gradient(135deg, #4facfe, #00f2fe)',
   music: 'linear-gradient(135deg, #7c3aed, #2563eb)',
-  gigachat: 'linear-gradient(135deg, #0088cc, #005588)',
 };
 
 export default function AppShell({ appName, visible, onClose, children }: AppShellProps) {

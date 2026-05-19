@@ -10,8 +10,9 @@ export default function OOBE({ onComplete }: OOBEProps) {
   const [pinConfirm, setPinConfirm] = useState('');
   const [pinMode, setPinMode] = useState<'create' | 'confirm' | null>(null);
   const [pinError, setPinError] = useState('');
+  const [progress, setProgress] = useState(0);
   const [selectedWifi, setSelectedWifi] = useState<string | null>(null);
-  const [fontSize, setFontSize] = useState<'Маленький' | 'Средний' | 'Крупный'>('Средний');
+  const [fontSize] = useState<'Маленький' | 'Средний' | 'Крупный'>('Средний');
   const [skipPin, setSkipPin] = useState(false);
 
   const wifiNetworks = [
@@ -59,8 +60,40 @@ export default function OOBE({ onComplete }: OOBEProps) {
     }
   }, [pin, pinConfirm, pinMode]);
 
+  // Step 3: App installation (10 seconds)
+  useEffect(() => {
+    if (step !== 3) return;
+    const start = Date.now();
+    const interval = setInterval(() => {
+      const passed = Date.now() - start;
+      setProgress(Math.min(100, (passed / 10000) * 100));
+      if (passed >= 10000) { clearInterval(interval); setStep(4); }
+    }, 200);
+    return () => clearInterval(interval);
+  }, [step]);
+
+  // Step 4: Update check (15 seconds)
+  useEffect(() => {
+    if (step !== 4) return;
+    const start = Date.now();
+    const interval = setInterval(() => {
+      const passed = Date.now() - start;
+      setProgress(Math.min(100, (passed / 15000) * 100));
+      if (passed >= 15000) { clearInterval(interval); setStep(5); }
+    }, 200);
+    return () => clearInterval(interval);
+  }, [step]);
+
   const finish = () => {
     localStorage.setItem('spidi_font_size', fontSize);
+    if (selectedWifi) {
+      const saved = localStorage.getItem('spidi_wifi_passwords');
+      const passwords = saved ? JSON.parse(saved) : [];
+      if (!passwords.includes(selectedWifi)) {
+        passwords.push(selectedWifi);
+        localStorage.setItem('spidi_wifi_passwords', JSON.stringify(passwords));
+      }
+    }
     onComplete(skipPin ? null : pin);
   };
 
@@ -98,14 +131,16 @@ export default function OOBE({ onComplete }: OOBEProps) {
           <h1 className="text-2xl font-bold text-white mb-1">
             {step === 1 && 'Подключение'}
             {step === 2 && (pinMode ? 'Введите PIN' : 'Безопасность')}
-            {step === 3 && 'Отображение'}
-            {step === 4 && 'Готово!'}
+            {step === 3 && 'Установка'}
+            {step === 4 && 'Обновление'}
+            {step === 5 && 'Готово!'}
           </h1>
           <p className="text-white/50 text-sm">
             {step === 1 && 'Выберите сеть Wi-Fi'}
             {step === 2 && (pinMode === 'create' ? 'Придумайте 4-значный PIN' : pinMode === 'confirm' ? 'Повторите PIN' : 'Защитите устройство')}
-            {step === 3 && 'Выберите размер шрифта'}
-            {step === 4 && 'Ваш SpidiPhone настроен'}
+            {step === 3 && 'Стандартных приложений'}
+            {step === 4 && 'Проверка системы'}
+            {step === 5 && 'Ваш SpidiPhone настроен'}
           </p>
         </div>
 
@@ -162,27 +197,32 @@ export default function OOBE({ onComplete }: OOBEProps) {
           </div>
         )}
 
-        {/* Step 3: Font Size */}
+        {/* Step 3: App Install (10 sec) */}
         {step === 3 && (
-          <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-5 border border-white/10">
-            <div className="text-center mb-4">
-              <div className="text-4xl mb-2">📝</div>
-              <h2 className="text-white text-lg font-semibold">Размер шрифта</h2>
+          <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-5 border border-white/10 text-center">
+            <div className="text-3xl mb-3">⚙️</div>
+            <h2 className="text-white text-lg font-semibold mb-2">Установка приложений</h2>
+            <div className="relative h-3 bg-white/10 rounded-full overflow-hidden mb-3">
+              <div className="h-full bg-gradient-to-r from-purple-600 to-pink-600 transition-all" style={{ width: `${progress}%` }} />
             </div>
-            <div className="space-y-2 mb-4">
-              {['Маленький', 'Средний', 'Крупный'].map(size => (
-                <button key={size} onClick={() => setFontSize(size as any)}
-                  className={`w-full px-4 py-3 rounded-xl text-left transition-all ${fontSize === size ? 'bg-purple-600 text-white' : 'bg-white/5 text-white/70 hover:bg-white/10'}`}
-                  style={{ fontSize: size === 'Маленький' ? '12px' : size === 'Средний' ? '14px' : '18px' }}>{size}</button>
-              ))}
-            </div>
-            <button onClick={() => setStep(4)}
-              className="w-full py-3 rounded-2xl font-semibold bg-gradient-to-r from-purple-600 to-pink-600 text-white active:scale-95 transition-all">Продолжить</button>
+            <div className="text-white/40 text-xs">{Math.round(progress)}%</div>
           </div>
         )}
 
-        {/* Step 4: Complete */}
+        {/* Step 4: Update Check (15 sec) */}
         {step === 4 && (
+          <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-5 border border-white/10 text-center">
+            <div className="text-3xl mb-3">🔄</div>
+            <h2 className="text-white text-lg font-semibold mb-2">Проверка обновлений</h2>
+            <div className="relative h-3 bg-white/10 rounded-full overflow-hidden mb-3">
+              <div className="h-full bg-gradient-to-r from-green-600 to-emerald-600 transition-all" style={{ width: `${progress}%` }} />
+            </div>
+            <div className="text-white/40 text-xs">{Math.round(progress)}%</div>
+          </div>
+        )}
+
+        {/* Step 5: Complete */}
+        {step === 5 && (
           <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-5 border border-white/10 text-center">
             <div className="text-5xl mb-3">🎉</div>
             <h2 className="text-white text-xl font-bold mb-2">Всё готово!</h2>
@@ -193,7 +233,7 @@ export default function OOBE({ onComplete }: OOBEProps) {
         )}
 
         <div className="flex justify-center gap-2 mt-4">
-          {[1,2,3,4].map(i => (
+          {[1,2,3,4,5].map(i => (
             <div key={i} className={`h-1.5 rounded-full transition-all ${i === step ? 'w-8 bg-gradient-to-r from-purple-500 to-pink-500' : i < step ? 'w-4 bg-purple-500/50' : 'w-2 bg-white/10'}`} />
           ))}
         </div>

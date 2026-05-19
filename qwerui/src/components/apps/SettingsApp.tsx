@@ -31,10 +31,13 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
 
 export default function SettingsApp() {
   const { fontSize, setFontSize } = useFont();
-  const [toggles, setToggles] = useState<Record<string, boolean>>(() => ({
-    'Wi-Fi': true, 'Bluetooth': false, 'Авиарежим': false, 'VPN': false,
-    'Автояркость': true, 'Отпечаток пальца': true, 'Распознавание лица': false,
-  }));
+  const [toggles, setToggles] = useState<Record<string, boolean>>(() => {
+    const saved = localStorage.getItem('spidi_toggles');
+    return saved ? JSON.parse(saved) : {
+      'Wi-Fi': true, 'Bluetooth': false, 'Авиарежим': false, 'VPN': false,
+      'Автояркость': true, 'Отпечаток пальца': true, 'Распознавание лица': false,
+    };
+  });
   const [brightness, setBrightness] = useState(70);
   const [volume, setVolume] = useState(60);
   const [activeModal, setActiveModal] = useState<string | null>(null);
@@ -42,6 +45,7 @@ export default function SettingsApp() {
   const [updateComplete, setUpdateComplete] = useState(false);
   const [resetConfirm, setResetConfirm] = useState(false);
   const [resetProgress, setResetProgress] = useState(0);
+  const [resetComplete, setResetComplete] = useState(false);
   const [connectedWifi, setConnectedWifi] = useState('SpidiFi_Free');
 
   const wifiNetworks = [
@@ -51,6 +55,11 @@ export default function SettingsApp() {
     { name: 'Cafe_Coffee', signal: 2 },
   ];
 
+  const saveToggles = useCallback((newToggles: Record<string, boolean>) => {
+    setToggles(newToggles);
+    localStorage.setItem('spidi_toggles', JSON.stringify(newToggles));
+  }, []);
+
   const startUpdateCheck = useCallback(() => {
     setActiveModal('update');
     setUpdateProgress(0);
@@ -58,21 +67,29 @@ export default function SettingsApp() {
     const start = Date.now();
     const interval = setInterval(() => {
       const passed = Date.now() - start;
-      const pct = Math.min(100, (passed / 13000) * 100);
+      const pct = Math.min(100, (passed / 15000) * 100);
       setUpdateProgress(pct);
-      if (passed >= 13000) { clearInterval(interval); setUpdateComplete(true); }
+      if (passed >= 15000) { clearInterval(interval); setUpdateComplete(true); }
     }, 200);
   }, []);
 
   const confirmReset = useCallback(() => {
     setResetConfirm(true);
     setResetProgress(0);
+    setResetComplete(false);
     const start = Date.now();
     const interval = setInterval(() => {
       const passed = Date.now() - start;
-      const pct = Math.min(100, (passed / 5000) * 100);
+      const pct = Math.min(100, (passed / 10000) * 100);
       setResetProgress(pct);
-      if (passed >= 5000) { clearInterval(interval); localStorage.clear(); window.location.reload(); }
+      if (passed >= 10000) {
+        clearInterval(interval);
+        setResetComplete(true);
+        setTimeout(() => {
+          localStorage.clear();
+          window.location.reload();
+        }, 1000);
+      }
     }, 200);
   }, []);
 
@@ -80,7 +97,7 @@ export default function SettingsApp() {
     if (label === 'Размер шрифта') setActiveModal('fontSize');
     if (label === 'Проверка обновлений') startUpdateCheck();
     if (label === 'Wi-Fi') setActiveModal('wifi');
-    if (label === 'Сброс настроек') { setResetConfirm(false); setActiveModal('reset'); }
+    if (label === 'Сброс настроек') { setResetConfirm(false); setResetComplete(false); setActiveModal('reset'); }
   };
 
   const sections: { title: string; items: SettingItem[] }[] = [
@@ -180,7 +197,7 @@ export default function SettingsApp() {
                 <div className="w-9 h-9 rounded-xl flex-shrink-0" style={{ background: item.gradient }} />
                 <span className="text-white flex-1">{item.label}</span>
                 {item.toggle ? (
-                  <ToggleSwitch on={toggles[item.label]} onChange={v => setToggles(prev => ({ ...prev, [item.label]: v }))} />
+                  <ToggleSwitch on={toggles[item.label] ?? item.defaultOn} onChange={v => saveToggles({ ...toggles, [item.label]: v })} />
                 ) : (
                   <div className="flex items-center gap-1.5">
                     <span className="text-white/35 text-sm">{item.value}</span>
@@ -220,10 +237,10 @@ export default function SettingsApp() {
                 <div className="text-4xl mb-2">🔄</div>
                 <div className="text-white/60 text-sm">Проверка доступных обновлений...</div>
               </div>
-              <div className="relative h-3 bg-white/10 rounded-full overflow-hidden">
+              <div className="relative h-3 bg-white/10 rounded-full overflow-hidden mb-3">
                 <div className="h-full bg-gradient-to-r from-purple-600 to-pink-600 transition-all" style={{ width: `${updateProgress}%` }} />
               </div>
-              <div className="text-center mt-2 text-white/40 text-xs">{Math.round(updateProgress)}%</div>
+              <div className="text-center text-white/40 text-xs">{Math.round(updateProgress)}%</div>
             </>
           ) : (
             <>
@@ -242,7 +259,7 @@ export default function SettingsApp() {
         <Modal title="Wi-Fi сети" onClose={() => setActiveModal(null)}>
           <div className="mb-4 flex items-center justify-between">
             <span className="text-white/60 text-sm">Доступные сети</span>
-            <ToggleSwitch on={toggles['Wi-Fi']} onChange={v => setToggles(prev => ({ ...prev, 'Wi-Fi': v }))} />
+            <ToggleSwitch on={toggles['Wi-Fi']} onChange={v => saveToggles({ ...toggles, 'Wi-Fi': v })} />
           </div>
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {wifiNetworks.map(n => (
@@ -263,7 +280,7 @@ export default function SettingsApp() {
 
       {/* Reset Modal */}
       {activeModal === 'reset' && (
-        <Modal title="Сброс настроек" onClose={() => !resetProgress && setActiveModal(null)}>
+        <Modal title="Сброс настроек" onClose={() => !resetProgress && !resetComplete && setActiveModal(null)}>
           {!resetConfirm ? (
             <>
               <div className="text-center mb-4">
@@ -276,16 +293,23 @@ export default function SettingsApp() {
                 <button onClick={confirmReset} className="flex-1 py-3 bg-red-600 rounded-xl text-white">Сбросить</button>
               </div>
             </>
-          ) : (
+          ) : !resetComplete ? (
             <>
               <div className="text-center mb-4">
                 <div className="text-4xl mb-2">🔄</div>
                 <div className="text-white/60 text-sm">Сброс настроек...</div>
               </div>
-              <div className="relative h-3 bg-white/10 rounded-full overflow-hidden">
+              <div className="relative h-3 bg-white/10 rounded-full overflow-hidden mb-3">
                 <div className="h-full bg-gradient-to-r from-red-600 to-orange-600 transition-all" style={{ width: `${resetProgress}%` }} />
               </div>
-              <div className="text-center mt-2 text-white/40 text-xs">{Math.round(resetProgress)}%</div>
+              <div className="text-center text-white/40 text-xs">{Math.round(resetProgress)}%</div>
+            </>
+          ) : (
+            <>
+              <div className="text-center mb-4">
+                <div className="text-4xl mb-2">✨</div>
+                <div className="text-white text-sm font-semibold">Сброс завершен!</div>
+              </div>
             </>
           )}
         </Modal>
