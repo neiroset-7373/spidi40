@@ -17,10 +17,18 @@ function ToggleSwitch({ on, onChange }: { on: boolean; onChange: (v: boolean) =>
 export default function SettingsApp() {
   const { fontSize, setFontSize } = useFont();
   const [activeSection, setActiveSection] = useState('general');
-  const [showFontModal, setShowFontModal] = useState(false);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [modals, setModals] = useState({
+    wifi: false,
+    bluetooth: false,
+    pin: false,
+    fingerprint: false,
+    faceUnlock: false,
+    fontSize: false,
+    reset: false,
+  });
   const [resetProgress, setResetProgress] = useState(0);
   const [resetComplete, setResetComplete] = useState(false);
+  const [connectedWifi, setConnectedWifi] = useState('SpidiFi_Free');
 
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('spidi_settings');
@@ -44,8 +52,10 @@ export default function SettingsApp() {
     localStorage.setItem('spidi_settings', JSON.stringify(newSettings));
   }, []);
 
+  const openModal = (key: keyof typeof modals) => setModals(m => ({ ...m, [key]: true }));
+  const closeModal = (key: keyof typeof modals) => setModals(m => ({ ...m, [key]: false }));
+
   const handleReset = () => {
-    setShowResetConfirm(true);
     setResetProgress(0);
     setResetComplete(false);
     const start = Date.now();
@@ -64,6 +74,13 @@ export default function SettingsApp() {
     }, 200);
   };
 
+  const wifiNetworks = [
+    { name: 'SpidiFi_Free', signal: 4 },
+    { name: 'Wintozo_Guest', signal: 3 },
+    { name: 'Android_Hotspot', signal: 5 },
+    { name: 'Cafe_Coffee', signal: 2 },
+  ];
+
   const sections = [
     { id: 'general', label: 'Основные', icon: '⚙️' },
     { id: 'display', label: 'Экран', icon: '📱' },
@@ -73,15 +90,15 @@ export default function SettingsApp() {
   ];
 
   const generalSettings = [
-    { key: 'wifi', label: 'Wi-Fi', icon: '📶', value: settings.wifi ? 'SpidiFi_Free' : 'Выкл' },
-    { key: 'bluetooth', label: 'Bluetooth', icon: '🔵', value: settings.bluetooth ? 'Вкл' : 'Выкл' },
+    { key: 'wifi', label: 'Wi-Fi', icon: '📶', value: settings.wifi ? connectedWifi : 'Выкл', clickable: true, action: 'wifi' },
+    { key: 'bluetooth', label: 'Bluetooth', icon: '🔵', value: settings.bluetooth ? 'Вкл' : 'Выкл', clickable: true, action: 'bluetooth' },
     { key: 'airplaneMode', label: 'Авиарежим', icon: '✈️', toggle: true },
     { key: 'notifications', label: 'Уведомления', icon: '🔔', toggle: true },
   ];
 
   const displaySettings = [
     { key: 'autoBrightness', label: 'Автояркость', icon: '☀️', toggle: true },
-    { label: 'Размер шрифта', icon: '📝', action: 'fontSize' },
+    { label: 'Размер шрифта', icon: '📝', action: 'fontSize', value: fontSize, clickable: true },
     { key: 'darkMode', label: 'Ночной режим', icon: '🌙', toggle: true },
   ];
 
@@ -91,9 +108,9 @@ export default function SettingsApp() {
   ];
 
   const securitySettings = [
-    { key: 'pinLock', label: 'PIN-код', icon: '🔐', value: '4 цифры' },
-    { key: 'fingerprint', label: 'Отпечаток', icon: '👆', toggle: true },
-    { key: 'faceUnlock', label: 'Распознавание лица', icon: '😎', toggle: true },
+    { key: 'pin', label: 'PIN-код', icon: '🔐', value: '****', action: 'pin', clickable: true },
+    { key: 'fingerprint', label: 'Отпечаток', icon: '👆', toggle: true, action: 'fingerprint', clickable: true },
+    { key: 'faceUnlock', label: 'Распознавание лица', icon: '😎', toggle: true, action: 'faceUnlock', clickable: true },
   ];
 
   return (
@@ -139,7 +156,10 @@ export default function SettingsApp() {
       <div className="flex-1 overflow-y-auto px-4 pb-4">
         <div className="space-y-3">
           {activeSection === 'general' && generalSettings.map(item => (
-            <div key={item.key} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div key={item.key}
+              onClick={() => item.clickable && (item.action ? openModal(item.action as any) : null)}
+              className={`flex items-center gap-3 p-3 rounded-xl transition-all ${item.clickable ? 'cursor-pointer hover:bg-white/5' : ''}`}
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
               <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl" style={{ background: 'rgba(102,126,234,0.2)' }}>{item.icon}</div>
               <div className="flex-1">
                 <div className="text-white font-medium">{item.label}</div>
@@ -154,14 +174,17 @@ export default function SettingsApp() {
           ))}
 
           {activeSection === 'display' && displaySettings.map(item => (
-            <div key={item.key || item.label} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div key={item.key || item.label}
+              onClick={() => item.clickable && (item.action === 'fontSize' ? openModal('fontSize') : null)}
+              className={`flex items-center gap-3 p-3 rounded-xl transition-all ${item.clickable ? 'cursor-pointer hover:bg-white/5' : ''}`}
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
               <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl" style={{ background: 'rgba(118,75,162,0.2)' }}>{item.icon}</div>
               <div className="flex-1">
                 <div className="text-white font-medium">{item.label}</div>
-                {item.key && !item.toggle ? <div className="text-white/40 text-xs">{fontSize}</div> : null}
+                {item.key && !item.toggle ? <div className="text-white/40 text-xs">{item.value}</div> : null}
               </div>
               {item.action === 'fontSize' ? (
-                <button onClick={() => setShowFontModal(true)} className="text-purple-400">›</button>
+                <div className="text-purple-400">›</div>
               ) : item.toggle ? (
                 <ToggleSwitch on={settings[item.key]} onChange={v => saveSettings({ ...settings, [item.key]: v })} />
               ) : null}
@@ -179,7 +202,10 @@ export default function SettingsApp() {
           ))}
 
           {activeSection === 'security' && securitySettings.map(item => (
-            <div key={item.key} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div key={item.key}
+              onClick={() => item.clickable && (item.action === 'pin' ? openModal('pin') : item.action === 'fingerprint' ? openModal('fingerprint') : item.action === 'faceUnlock' ? openModal('faceUnlock') : null)}
+              className={`flex items-center gap-3 p-3 rounded-xl transition-all ${item.clickable ? 'cursor-pointer hover:bg-white/5' : ''}`}
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
               <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl" style={{ background: 'rgba(56,239,125,0.2)' }}>{item.icon}</div>
               <div className="flex-1">
                 <div className="text-white font-medium">{item.label}</div>
@@ -202,7 +228,7 @@ export default function SettingsApp() {
                 <div className="text-white/30 text-xs mt-2">Версия 16.0.1</div>
               </div>
               <button
-                onClick={() => setShowResetConfirm(true)}
+                onClick={() => openModal('reset')}
                 className="w-full p-4 rounded-xl flex items-center gap-3 transition-all hover:opacity-80"
                 style={{ background: 'linear-gradient(135deg, rgba(239,68,68,0.2), rgba(220,38,38,0.2))', border: '1px solid rgba(239,68,68,0.3)' }}
               >
@@ -217,21 +243,27 @@ export default function SettingsApp() {
         </div>
       </div>
 
-      {/* Font Size Modal */}
-      {showFontModal && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowFontModal(false)}>
+      {/* WiFi Modal */}
+      {modals.wifi && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={() => closeModal('wifi')}>
           <div className="relative w-full bg-[#1a1a2e] rounded-t-3xl p-6 pb-8" onClick={e => e.stopPropagation()}>
             <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-4" />
-            <h3 className="text-white text-lg font-semibold mb-4 text-center">Размер шрифта</h3>
-            <div className="space-y-2">
-              {(['Маленький', 'Средний', 'Крупный', 'Очень крупный'] as const).map(size => (
-                <button
-                  key={size}
-                  onClick={() => { setFontSize(size); setShowFontModal(false); }}
-                  className={`w-full px-4 py-3 rounded-xl text-left transition-all ${fontSize === size ? 'bg-purple-600 text-white' : 'bg-white/5 text-white/70 hover:bg-white/10'}`}
-                  style={{ fontSize: size === 'Маленький' ? '12px' : size === 'Средний' ? '14px' : size === 'Крупный' ? '18px' : '22px' }}
-                >
-                  {size}
+            <h3 className="text-white text-lg font-semibold mb-4 text-center">Wi-Fi сети</h3>
+            <div className="mb-4 flex items-center justify-between">
+              <span className="text-white/60 text-sm">Доступные сети</span>
+              <ToggleSwitch on={settings.wifi} onChange={v => saveSettings({ ...settings, wifi: v })} />
+            </div>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {wifiNetworks.map(n => (
+                <button key={n.name} onClick={() => setConnectedWifi(n.name)}
+                  className={`w-full px-4 py-3 rounded-xl flex items-center justify-between transition-all ${connectedWifi === n.name ? 'bg-purple-600 text-white' : 'bg-white/5 text-white/70 hover:bg-white/10'}`}>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-end gap-[2px] h-4">
+                      {[2,4,6,8].map((h,i) => <div key={i} className="w-[2px] rounded-[1px]" style={{ height: `${h}px`, background: i < n.signal ? 'currentColor' : 'rgba(255,255,255,0.2)' }} />)}
+                    </div>
+                    <span className="font-medium">{n.name}</span>
+                  </div>
+                  {connectedWifi === n.name && <span>✓</span>}
                 </button>
               ))}
             </div>
@@ -239,9 +271,87 @@ export default function SettingsApp() {
         </div>
       )}
 
-      {/* Reset Confirm Modal */}
-      {showResetConfirm && !resetComplete && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => !resetProgress && setShowResetConfirm(false)}>
+      {/* Bluetooth Modal */}
+      {modals.bluetooth && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={() => closeModal('bluetooth')}>
+          <div className="relative w-full bg-[#1a1a2e] rounded-t-3xl p-6 pb-8" onClick={e => e.stopPropagation()}>
+            <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-4" />
+            <h3 className="text-white text-lg font-semibold mb-4 text-center">Bluetooth</h3>
+            <div className="text-center py-8">
+              <div className="text-5xl mb-4">🔵</div>
+              <div className="text-white/60 text-sm mb-4">Управление Bluetooth устройствами</div>
+              <ToggleSwitch on={settings.bluetooth} onChange={v => saveSettings({ ...settings, bluetooth: v })} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Font Size Modal */}
+      {modals.fontSize && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={() => closeModal('fontSize')}>
+          <div className="relative w-full bg-[#1a1a2e] rounded-t-3xl p-6 pb-8" onClick={e => e.stopPropagation()}>
+            <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-4" />
+            <h3 className="text-white text-lg font-semibold mb-4 text-center">Размер шрифта</h3>
+            <div className="space-y-2">
+              {(['Маленький', 'Средний', 'Крупный', 'Очень крупный'] as const).map(size => (
+                <button key={size} onClick={() => { setFontSize(size); closeModal('fontSize'); }}
+                  className={`w-full px-4 py-3 rounded-xl text-left transition-all ${fontSize === size ? 'bg-purple-600 text-white' : 'bg-white/5 text-white/70 hover:bg-white/10'}`}
+                  style={{ fontSize: size === 'Маленький' ? '12px' : size === 'Средний' ? '14px' : size === 'Крупный' ? '18px' : '22px' }}>{size}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PIN Modal */}
+      {modals.pin && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={() => closeModal('pin')}>
+          <div className="relative w-full bg-[#1a1a2e] rounded-t-3xl p-6 pb-8" onClick={e => e.stopPropagation()}>
+            <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-4" />
+            <h3 className="text-white text-lg font-semibold mb-4 text-center">PIN-код</h3>
+            <div className="text-center py-4">
+              <div className="text-4xl mb-4">🔐</div>
+              <div className="text-white/60 text-sm mb-4">Изменить PIN-код блокировки</div>
+              <button className="w-full py-3 bg-purple-600 rounded-xl text-white font-medium mb-2">Сменить PIN</button>
+              <button className="w-full py-3 bg-white/10 rounded-xl text-white font-medium">Отключить PIN</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fingerprint Modal */}
+      {modals.fingerprint && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={() => closeModal('fingerprint')}>
+          <div className="relative w-full bg-[#1a1a2e] rounded-t-3xl p-6 pb-8" onClick={e => e.stopPropagation()}>
+            <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-4" />
+            <h3 className="text-white text-lg font-semibold mb-4 text-center">Отпечаток пальца</h3>
+            <div className="text-center py-4">
+              <div className="text-4xl mb-4">👆</div>
+              <div className="text-white/60 text-sm mb-4">Добавить отпечаток для разблокировки</div>
+              <ToggleSwitch on={settings.fingerprint} onChange={v => saveSettings({ ...settings, fingerprint: v })} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Face Unlock Modal */}
+      {modals.faceUnlock && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={() => closeModal('faceUnlock')}>
+          <div className="relative w-full bg-[#1a1a2e] rounded-t-3xl p-6 pb-8" onClick={e => e.stopPropagation()}>
+            <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-4" />
+            <h3 className="text-white text-lg font-semibold mb-4 text-center">Распознавание лица</h3>
+            <div className="text-center py-4">
+              <div className="text-4xl mb-4">😎</div>
+              <div className="text-white/60 text-sm mb-4">Настроить разблокировку по лицу</div>
+              <ToggleSwitch on={settings.faceUnlock} onChange={v => saveSettings({ ...settings, faceUnlock: v })} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Modal */}
+      {modals.reset && !resetComplete && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => !resetProgress && closeModal('reset')}>
           <div className="relative w-[280px] bg-[#1a1a2e] rounded-3xl p-6" onClick={e => e.stopPropagation()}>
             <div className="text-center">
               <div className="text-4xl mb-3">⚠️</div>
@@ -249,7 +359,7 @@ export default function SettingsApp() {
               <p className="text-white/50 text-sm mb-4">Все данные будут удалены безвозвратно</p>
               {!resetProgress ? (
                 <div className="flex gap-2">
-                  <button onClick={() => setShowResetConfirm(false)} className="flex-1 py-3 bg-white/10 rounded-xl text-white font-medium">Отмена</button>
+                  <button onClick={() => closeModal('reset')} className="flex-1 py-3 bg-white/10 rounded-xl text-white font-medium">Отмена</button>
                   <button onClick={handleReset} className="flex-1 py-3 bg-red-600 rounded-xl text-white font-medium">Сбросить</button>
                 </div>
               ) : (
