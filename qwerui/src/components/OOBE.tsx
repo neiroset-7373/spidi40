@@ -10,7 +10,6 @@ export default function OOBE({ onComplete }: OOBEProps) {
   const [pinConfirm, setPinConfirm] = useState('');
   const [pinMode, setPinMode] = useState<'create' | 'confirm' | null>(null);
   const [pinError, setPinError] = useState('');
-  const [progress, setProgress] = useState(0);
   const [selectedWifi, setSelectedWifi] = useState<string | null>(null);
   const [fontSize, setFontSize] = useState<'Маленький' | 'Средний' | 'Крупный'>('Средний');
   const [skipPin, setSkipPin] = useState(false);
@@ -22,7 +21,6 @@ export default function OOBE({ onComplete }: OOBEProps) {
     { name: 'Cafe_Coffee', signal: 2 },
   ];
 
-  // PIN keypad handlers
   const addPinDigit = (d: string) => {
     if (pinMode === 'create') {
       if (pin.length < 4) setPin(p => p + d);
@@ -36,7 +34,7 @@ export default function OOBE({ onComplete }: OOBEProps) {
     else if (pinMode === 'confirm') setPinConfirm(p => p.slice(0, -1));
   };
 
-  const submitPin = () => {
+  const handlePinSubmit = () => {
     if (pinMode === 'create') {
       if (pin.length === 4) {
         setPinMode('confirm');
@@ -56,34 +54,10 @@ export default function OOBE({ onComplete }: OOBEProps) {
 
   useEffect(() => {
     if ((pinMode === 'create' && pin.length === 4) || (pinMode === 'confirm' && pinConfirm.length === 4)) {
-      const t = setTimeout(submitPin, 300);
+      const t = setTimeout(handlePinSubmit, 300);
       return () => clearTimeout(t);
     }
-  }, [pin, pinConfirm]);
-
-  // Step 4: App installation (5 seconds)
-  useEffect(() => {
-    if (step !== 4) return;
-    const start = Date.now();
-    const interval = setInterval(() => {
-      const passed = Date.now() - start;
-      setProgress(Math.min(100, (passed / 5000) * 100));
-      if (passed >= 5000) { clearInterval(interval); setStep(5); }
-    }, 200);
-    return () => clearInterval(interval);
-  }, [step]);
-
-  // Step 5: Update check (13 seconds)
-  useEffect(() => {
-    if (step !== 5) return;
-    const start = Date.now();
-    const interval = setInterval(() => {
-      const passed = Date.now() - start;
-      setProgress(Math.min(100, (passed / 13000) * 100));
-      if (passed >= 13000) { clearInterval(interval); setStep(6); }
-    }, 200);
-    return () => clearInterval(interval);
-  }, [step]);
+  }, [pin, pinConfirm, pinMode]);
 
   const finish = () => {
     localStorage.setItem('spidi_font_size', fontSize);
@@ -125,17 +99,13 @@ export default function OOBE({ onComplete }: OOBEProps) {
             {step === 1 && 'Подключение'}
             {step === 2 && (pinMode ? 'Введите PIN' : 'Безопасность')}
             {step === 3 && 'Отображение'}
-            {step === 4 && 'Установка'}
-            {step === 5 && 'Обновление'}
-            {step === 6 && 'Готово!'}
+            {step === 4 && 'Готово!'}
           </h1>
           <p className="text-white/50 text-sm">
             {step === 1 && 'Выберите сеть Wi-Fi'}
             {step === 2 && (pinMode === 'create' ? 'Придумайте 4-значный PIN' : pinMode === 'confirm' ? 'Повторите PIN' : 'Защитите устройство')}
             {step === 3 && 'Выберите размер шрифта'}
-            {step === 4 && 'Стандартных приложений'}
-            {step === 5 && 'Проверка системы'}
-            {step === 6 && 'Ваш SpidiPhone настроен'}
+            {step === 4 && 'Ваш SpidiPhone настроен'}
           </p>
         </div>
 
@@ -211,32 +181,8 @@ export default function OOBE({ onComplete }: OOBEProps) {
           </div>
         )}
 
-        {/* Step 4: App Install */}
+        {/* Step 4: Complete */}
         {step === 4 && (
-          <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-5 border border-white/10 text-center">
-            <div className="text-3xl mb-3">⚙️</div>
-            <h2 className="text-white text-lg font-semibold mb-2">Установка приложений</h2>
-            <div className="relative h-3 bg-white/10 rounded-full overflow-hidden mb-3">
-              <div className="h-full bg-gradient-to-r from-purple-600 to-pink-600 transition-all" style={{ width: `${progress}%` }} />
-            </div>
-            <div className="text-white/40 text-xs">{Math.round(progress)}%</div>
-          </div>
-        )}
-
-        {/* Step 5: Update Check */}
-        {step === 5 && (
-          <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-5 border border-white/10 text-center">
-            <div className="text-3xl mb-3">🔄</div>
-            <h2 className="text-white text-lg font-semibold mb-2">Проверка обновлений</h2>
-            <div className="relative h-3 bg-white/10 rounded-full overflow-hidden mb-3">
-              <div className="h-full bg-gradient-to-r from-green-600 to-emerald-600 transition-all" style={{ width: `${progress}%` }} />
-            </div>
-            <div className="text-white/40 text-xs">{Math.round(progress)}%</div>
-          </div>
-        )}
-
-        {/* Step 6: Complete */}
-        {step === 6 && (
           <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-5 border border-white/10 text-center">
             <div className="text-5xl mb-3">🎉</div>
             <h2 className="text-white text-xl font-bold mb-2">Всё готово!</h2>
@@ -247,7 +193,7 @@ export default function OOBE({ onComplete }: OOBEProps) {
         )}
 
         <div className="flex justify-center gap-2 mt-4">
-          {[1,2,3,4,5,6].map(i => (
+          {[1,2,3,4].map(i => (
             <div key={i} className={`h-1.5 rounded-full transition-all ${i === step ? 'w-8 bg-gradient-to-r from-purple-500 to-pink-500' : i < step ? 'w-4 bg-purple-500/50' : 'w-2 bg-white/10'}`} />
           ))}
         </div>

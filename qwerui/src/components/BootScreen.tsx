@@ -1,32 +1,24 @@
-import { useEffect, useState } from 'react';
-
 interface BootScreenProps {
   onComplete: () => void;
+  isFirstRun: boolean;
 }
 
-export default function BootScreen({ onComplete }: BootScreenProps) {
-  const [show, setShow] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShow(false);
-      setTimeout(onComplete, 500);
-    }, 11000);
-    return () => clearTimeout(timer);
-  }, [onComplete]);
+export default function BootScreen({ onComplete, isFirstRun }: BootScreenProps) {
+  const handleVideoEnd = () => {
+    onComplete();
+  };
 
   return (
-    <div
-      className="absolute inset-0 transition-opacity duration-500"
-      style={{
-        opacity: show ? 1 : 0,
-        pointerEvents: show ? 'auto' : 'none',
-      }}>
-      <img
-        src="/photo_pri_Zapuske.jpg"
-        alt="SpidiPhone"
+    <div className="absolute inset-0">
+      <video
+        autoPlay
+        playsInline
+        muted
+        onEnded={handleVideoEnd}
         className="w-full h-full object-cover"
-      />
+      >
+        <source src={isFirstRun ? "/start_phone/OOBE/start_phone_oobe.mp4" : "/start_phone/Normal/zapusk_complected_oobe.mp4"} type="video/mp4" />
+      </video>
     </div>
   );
 }

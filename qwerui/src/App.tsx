@@ -24,11 +24,21 @@ function AppContent() {
   const [showHome, setShowHome] = useState(false);
   const [showOOBE, setShowOOBE] = useState(false);
   const [showBoot, setShowBoot] = useState(true);
+  const [isFirstRun, setIsFirstRun] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowBoot(false), 11000);
-    return () => clearTimeout(timer);
+    const oobeCompleted = localStorage.getItem('spidiphone_oobe_completed');
+    setIsFirstRun(!oobeCompleted);
   }, []);
+
+  const handleBootComplete = () => {
+    setShowBoot(false);
+    if (isFirstRun) {
+      setShowOOBE(true);
+    } else {
+      setLocked(true);
+    }
+  };
 
   useEffect(() => {
     if (!showBoot && !showOOBE && !locked && !activeApp) {
@@ -120,7 +130,7 @@ function AppContent() {
               style={{ background: '#0d1117', border: '1.5px solid rgba(255,255,255,0.08)', boxShadow: 'inset 0 0 4px rgba(100,200,255,0.15)' }} />
           </div>
 
-          {showBoot && <BootScreen onComplete={() => setLocked(true)} />}
+          {showBoot && <BootScreen onComplete={handleBootComplete} isFirstRun={isFirstRun} />}
 
           <div className="absolute inset-0 transition-all duration-700"
             style={{ opacity: (!showBoot && locked && !showOOBE) ? 1 : 0, transform: (!showBoot && locked && !showOOBE) ? 'scale(1)' : 'scale(1.06)', pointerEvents: (!showBoot && locked && !showOOBE) ? 'auto' : 'none', zIndex: (!showBoot && locked && !showOOBE) ? 40 : -1 }}>
