@@ -17,18 +17,6 @@ function ToggleSwitch({ on, onChange }: { on: boolean; onChange: (v: boolean) =>
   );
 }
 
-function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
-  return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <div className="relative w-full bg-[#1a1a2e] rounded-t-3xl p-6 pb-10" style={{ animation: 'slideUp 0.3s ease' }} onClick={e => e.stopPropagation()}>
-        <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-4" />
-        <h3 className="text-white text-lg font-semibold mb-4 text-center">{title}</h3>
-        {children}
-      </div>
-    </div>
-  );
-}
-
 export default function SettingsApp() {
   const { fontSize, setFontSize } = useFont();
   const [toggles, setToggles] = useState<Record<string, boolean>>(() => {
@@ -151,168 +139,187 @@ export default function SettingsApp() {
   ];
 
   return (
-    <div className="h-full overflow-y-auto relative" style={{ background: '#0f0f1a' }}>
+    <div className="relative h-full" style={{ background: '#0f0f1a' }}>
       <style>{`@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }`}</style>
 
-      <div className="mx-4 mt-3 mb-4 p-4 rounded-3xl flex items-center gap-4" style={{ background: 'linear-gradient(135deg, rgba(102,126,234,0.2), rgba(118,75,162,0.2))', border: '1px solid rgba(102,126,234,0.3)' }}>
-        <div className="w-16 h-16 rounded-full" style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)' }} />
-        <div>
-          <div className="text-white font-bold text-lg">Spidi User</div>
-          <div className="text-white/50 text-sm">spidi@spidios.ru</div>
-          <div className="text-purple-400 text-xs mt-0.5">Spidios Premium</div>
-        </div>
-      </div>
-
-      <div className="mx-4 mb-4 p-4 rounded-3xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-        <div className="mb-4">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-white/60 text-sm">☀️ Яркость</span>
-            <span className="text-white/40 text-xs">{brightness}%</span>
-          </div>
-          <div className="relative h-2 rounded-full overflow-hidden cursor-pointer" style={{ background: 'rgba(255,255,255,0.1)' }}
-            onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); setBrightness(Math.max(5, Math.min(100, Math.round(((e.clientX - rect.left) / rect.width) * 100)))); }}>
-            <div className="h-full rounded-full transition-all" style={{ width: `${brightness}%`, background: 'linear-gradient(90deg, #f7971e, #ffd200)' }} />
+      <div className="h-full overflow-y-auto pb-8">
+        {/* Profile Card */}
+        <div className="mx-4 mt-3 mb-4 p-4 rounded-3xl flex items-center gap-4" style={{ background: 'linear-gradient(135deg, rgba(102,126,234,0.2), rgba(118,75,162,0.2))', border: '1px solid rgba(102,126,234,0.3)' }}>
+          <div className="w-16 h-16 rounded-full" style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)' }} />
+          <div>
+            <div className="text-white font-bold text-lg">Spidi User</div>
+            <div className="text-white/50 text-sm">spidi@spidios.ru</div>
+            <div className="text-purple-400 text-xs mt-0.5">Spidios Premium</div>
           </div>
         </div>
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-white/60 text-sm">🔊 Громкость</span>
-            <span className="text-white/40 text-xs">{volume}%</span>
-          </div>
-          <div className="relative h-2 rounded-full overflow-hidden cursor-pointer" style={{ background: 'rgba(255,255,255,0.1)' }}
-            onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); setVolume(Math.max(0, Math.min(100, Math.round(((e.clientX - rect.left) / rect.width) * 100)))); }}>
-            <div className="h-full rounded-full transition-all" style={{ width: `${volume}%`, background: 'linear-gradient(90deg, #11998e, #38ef7d)' }} />
-          </div>
-        </div>
-      </div>
 
-      {sections.map(section => (
-        <div key={section.title} className="mx-4 mb-3">
-          <div className="text-white/40 text-xs uppercase tracking-widest mb-2 px-1">{section.title}</div>
-          <div className="rounded-3xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-            {section.items.map((item, idx) => (
-              <div key={item.label} onClick={() => handleItemClick(item.label)}
-                className="flex items-center gap-3 px-4 py-3.5 transition-all active:bg-white/5 cursor-pointer"
-                style={{ borderBottom: idx < section.items.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-                <div className="w-9 h-9 rounded-xl flex-shrink-0" style={{ background: item.gradient }} />
-                <span className="text-white flex-1">{item.label}</span>
-                {item.toggle ? (
-                  <ToggleSwitch on={toggles[item.label] ?? item.defaultOn} onChange={v => saveToggles({ ...toggles, [item.label]: v })} />
-                ) : (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-white/35 text-sm">{item.value}</span>
-                    <span className="text-white/20">›</span>
-                  </div>
-                )}
-              </div>
-            ))}
+        {/* Brightness & Volume */}
+        <div className="mx-4 mb-4 p-4 rounded-3xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="mb-4">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-white/60 text-sm">☀️ Яркость</span>
+              <span className="text-white/40 text-xs">{brightness}%</span>
+            </div>
+            <div className="relative h-2 rounded-full overflow-hidden cursor-pointer" style={{ background: 'rgba(255,255,255,0.1)' }}
+              onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); setBrightness(Math.max(5, Math.min(100, Math.round(((e.clientX - rect.left) / rect.width) * 100)))); }}>
+              <div className="h-full rounded-full transition-all" style={{ width: `${brightness}%`, background: 'linear-gradient(90deg, #f7971e, #ffd200)' }} />
+            </div>
+          </div>
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-white/60 text-sm">🔊 Громкость</span>
+              <span className="text-white/40 text-xs">{volume}%</span>
+            </div>
+            <div className="relative h-2 rounded-full overflow-hidden cursor-pointer" style={{ background: 'rgba(255,255,255,0.1)' }}
+              onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); setVolume(Math.max(0, Math.min(100, Math.round(((e.clientX - rect.left) / rect.width) * 100)))); }}>
+              <div className="h-full rounded-full transition-all" style={{ width: `${volume}%`, background: 'linear-gradient(90deg, #11998e, #38ef7d)' }} />
+            </div>
           </div>
         </div>
-      ))}
 
-      <div className="text-center py-6 pb-8">
-        <div className="text-white/20 text-xs">Spidios • Android 16 • Spidiphone 1</div>
-        <div className="text-white/15 text-xs mt-0.5">Версия 16.0.1 (Spidi Build)</div>
-      </div>
-
-      {/* Font Size Modal */}
-      {activeModal === 'fontSize' && (
-        <Modal title="Размер шрифта" onClose={() => setActiveModal(null)}>
-          <div className="space-y-2">
-            {(['Маленький', 'Средний', 'Крупный', 'Очень крупный'] as const).map(size => (
-              <button key={size} onClick={() => { setFontSize(size); setActiveModal(null); }}
-                className={`w-full px-4 py-3 rounded-xl text-left transition-all ${fontSize === size ? 'bg-purple-600 text-white' : 'bg-white/5 text-white/70 hover:bg-white/10'}`}
-                style={{ fontSize: size === 'Маленький' ? '12px' : size === 'Средний' ? '14px' : size === 'Крупный' ? '18px' : '22px' }}>{size}</button>
-            ))}
-          </div>
-        </Modal>
-      )}
-
-      {/* Update Modal */}
-      {activeModal === 'update' && (
-        <Modal title="Проверка обновлений" onClose={() => updateComplete && setActiveModal(null)}>
-          {!updateComplete ? (
-            <>
-              <div className="text-center mb-4">
-                <div className="text-4xl mb-2">🔄</div>
-                <div className="text-white/60 text-sm">Проверка доступных обновлений...</div>
-              </div>
-              <div className="relative h-3 bg-white/10 rounded-full overflow-hidden mb-3">
-                <div className="h-full bg-gradient-to-r from-purple-600 to-pink-600 transition-all" style={{ width: `${updateProgress}%` }} />
-              </div>
-              <div className="text-center text-white/40 text-xs">{Math.round(updateProgress)}%</div>
-            </>
-          ) : (
-            <>
-              <div className="text-center mb-4">
-                <div className="text-4xl mb-2">✅</div>
-                <div className="text-white text-sm font-semibold">Обновлений не найдено</div>
-              </div>
-              <button onClick={() => setActiveModal(null)} className="w-full py-3 bg-purple-600 rounded-xl text-white">ОК</button>
-            </>
-          )}
-        </Modal>
-      )}
-
-      {/* Wi-Fi Modal */}
-      {activeModal === 'wifi' && (
-        <Modal title="Wi-Fi сети" onClose={() => setActiveModal(null)}>
-          <div className="mb-4 flex items-center justify-between">
-            <span className="text-white/60 text-sm">Доступные сети</span>
-            <ToggleSwitch on={toggles['Wi-Fi']} onChange={v => saveToggles({ ...toggles, 'Wi-Fi': v })} />
-          </div>
-          <div className="space-y-2 max-h-64 overflow-y-auto">
-            {wifiNetworks.map(n => (
-              <button key={n.name} onClick={() => setConnectedWifi(n.name)}
-                className={`w-full px-4 py-3 rounded-xl flex items-center justify-between transition-all ${connectedWifi === n.name ? 'bg-purple-600 text-white' : 'bg-white/5 text-white/70 hover:bg-white/10'}`}>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-end gap-[2px] h-4">
-                    {[2,4,6,8].map((h,i) => <div key={i} className="w-[2px] rounded-[1px]" style={{ height: `${h}px`, background: i < n.signal ? 'currentColor' : 'rgba(255,255,255,0.2)' }} />)}
-                  </div>
-                  <span className="font-medium">{n.name}</span>
+        {/* Settings Sections */}
+        {sections.map(section => (
+          <div key={section.title} className="mx-4 mb-3">
+            <div className="text-white/40 text-xs uppercase tracking-widest mb-2 px-1">{section.title}</div>
+            <div className="rounded-3xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              {section.items.map((item, idx) => (
+                <div key={item.label} onClick={() => handleItemClick(item.label)}
+                  className="flex items-center gap-3 px-4 py-3.5 transition-all active:bg-white/5 cursor-pointer"
+                  style={{ borderBottom: idx < section.items.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                  <div className="w-9 h-9 rounded-xl flex-shrink-0" style={{ background: item.gradient }} />
+                  <span className="text-white flex-1">{item.label}</span>
+                  {item.toggle ? (
+                    <ToggleSwitch on={toggles[item.label] ?? item.defaultOn} onChange={v => saveToggles({ ...toggles, [item.label]: v })} />
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-white/35 text-sm">{item.value}</span>
+                      <span className="text-white/20">›</span>
+                    </div>
+                  )}
                 </div>
-                {connectedWifi === n.name && <span>✓</span>}
-              </button>
-            ))}
+              ))}
+            </div>
           </div>
-        </Modal>
+        ))}
+
+        {/* Footer */}
+        <div className="text-center py-6 pb-8">
+          <div className="text-white/20 text-xs">Spidios • Android 16 • Spidiphone 1</div>
+          <div className="text-white/15 text-xs mt-0.5">Версия 16.0.1 (Spidi Build)</div>
+        </div>
+      </div>
+
+      {/* Modals */}
+      {activeModal === 'fontSize' && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={() => setActiveModal(null)}>
+          <div className="relative w-full bg-[#1a1a2e] rounded-t-3xl p-6 pb-10" onClick={e => e.stopPropagation()}>
+            <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-4" />
+            <h3 className="text-white text-lg font-semibold mb-4 text-center">Размер шрифта</h3>
+            <div className="space-y-2">
+              {(['Маленький', 'Средний', 'Крупный', 'Очень крупный'] as const).map(size => (
+                <button key={size} onClick={() => { setFontSize(size); setActiveModal(null); }}
+                  className={`w-full px-4 py-3 rounded-xl text-left transition-all ${fontSize === size ? 'bg-purple-600 text-white' : 'bg-white/5 text-white/70 hover:bg-white/10'}`}
+                  style={{ fontSize: size === 'Маленький' ? '12px' : size === 'Средний' ? '14px' : size === 'Крупный' ? '18px' : '22px' }}>{size}</button>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* Reset Modal */}
+      {activeModal === 'update' && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={() => updateComplete && setActiveModal(null)}>
+          <div className="relative w-full bg-[#1a1a2e] rounded-t-3xl p-6 pb-10" onClick={e => e.stopPropagation()}>
+            <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-4" />
+            <h3 className="text-white text-lg font-semibold mb-4 text-center">Проверка обновлений</h3>
+            {!updateComplete ? (
+              <>
+                <div className="text-center mb-4">
+                  <div className="text-4xl mb-2">🔄</div>
+                  <div className="text-white/60 text-sm">Проверка доступных обновлений...</div>
+                </div>
+                <div className="relative h-3 bg-white/10 rounded-full overflow-hidden mb-3">
+                  <div className="h-full bg-gradient-to-r from-purple-600 to-pink-600 transition-all" style={{ width: `${updateProgress}%` }} />
+                </div>
+                <div className="text-center text-white/40 text-xs">{Math.round(updateProgress)}%</div>
+              </>
+            ) : (
+              <>
+                <div className="text-center mb-4">
+                  <div className="text-4xl mb-2">✅</div>
+                  <div className="text-white text-sm font-semibold">Обновлений не найдено</div>
+                </div>
+                <button onClick={() => setActiveModal(null)} className="w-full py-3 bg-purple-600 rounded-xl text-white">ОК</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeModal === 'wifi' && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={() => setActiveModal(null)}>
+          <div className="relative w-full bg-[#1a1a2e] rounded-t-3xl p-6 pb-10" onClick={e => e.stopPropagation()}>
+            <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-4" />
+            <h3 className="text-white text-lg font-semibold mb-4 text-center">Wi-Fi сети</h3>
+            <div className="mb-4 flex items-center justify-between">
+              <span className="text-white/60 text-sm">Доступные сети</span>
+              <ToggleSwitch on={toggles['Wi-Fi']} onChange={v => saveToggles({ ...toggles, 'Wi-Fi': v })} />
+            </div>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {wifiNetworks.map(n => (
+                <button key={n.name} onClick={() => setConnectedWifi(n.name)}
+                  className={`w-full px-4 py-3 rounded-xl flex items-center justify-between transition-all ${connectedWifi === n.name ? 'bg-purple-600 text-white' : 'bg-white/5 text-white/70 hover:bg-white/10'}`}>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-end gap-[2px] h-4">
+                      {[2,4,6,8].map((h,i) => <div key={i} className="w-[2px] rounded-[1px]" style={{ height: `${h}px`, background: i < n.signal ? 'currentColor' : 'rgba(255,255,255,0.2)' }} />)}
+                    </div>
+                    <span className="font-medium">{n.name}</span>
+                  </div>
+                  {connectedWifi === n.name && <span>✓</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {activeModal === 'reset' && (
-        <Modal title="Сброс настроек" onClose={() => !resetProgress && !resetComplete && setActiveModal(null)}>
-          {!resetConfirm ? (
-            <>
-              <div className="text-center mb-4">
-                <div className="text-4xl mb-2">⚠️</div>
-                <div className="text-white text-sm font-semibold">Вы уверены?</div>
-                <div className="text-white/50 text-xs mt-1">Все данные будут удалены безвозвратно</div>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => setActiveModal(null)} className="flex-1 py-3 bg-white/10 rounded-xl text-white">Отмена</button>
-                <button onClick={confirmReset} className="flex-1 py-3 bg-red-600 rounded-xl text-white">Сбросить</button>
-              </div>
-            </>
-          ) : !resetComplete ? (
-            <>
-              <div className="text-center mb-4">
-                <div className="text-4xl mb-2">🔄</div>
-                <div className="text-white/60 text-sm">Сброс настроек...</div>
-              </div>
-              <div className="relative h-3 bg-white/10 rounded-full overflow-hidden mb-3">
-                <div className="h-full bg-gradient-to-r from-red-600 to-orange-600 transition-all" style={{ width: `${resetProgress}%` }} />
-              </div>
-              <div className="text-center text-white/40 text-xs">{Math.round(resetProgress)}%</div>
-            </>
-          ) : (
-            <>
-              <div className="text-center mb-4">
-                <div className="text-4xl mb-2">✨</div>
-                <div className="text-white text-sm font-semibold">Сброс завершен!</div>
-              </div>
-            </>
-          )}
-        </Modal>
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={() => !resetProgress && !resetComplete && setActiveModal(null)}>
+          <div className="relative w-full bg-[#1a1a2e] rounded-t-3xl p-6 pb-10" onClick={e => e.stopPropagation()}>
+            <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-4" />
+            <h3 className="text-white text-lg font-semibold mb-4 text-center">Сброс настроек</h3>
+            {!resetConfirm ? (
+              <>
+                <div className="text-center mb-4">
+                  <div className="text-4xl mb-2">⚠️</div>
+                  <div className="text-white text-sm font-semibold">Вы уверены?</div>
+                  <div className="text-white/50 text-xs mt-1">Все данные будут удалены безвозвратно</div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setActiveModal(null)} className="flex-1 py-3 bg-white/10 rounded-xl text-white">Отмена</button>
+                  <button onClick={confirmReset} className="flex-1 py-3 bg-red-600 rounded-xl text-white">Сбросить</button>
+                </div>
+              </>
+            ) : !resetComplete ? (
+              <>
+                <div className="text-center mb-4">
+                  <div className="text-4xl mb-2">🔄</div>
+                  <div className="text-white/60 text-sm">Сброс настроек...</div>
+                </div>
+                <div className="relative h-3 bg-white/10 rounded-full overflow-hidden mb-3">
+                  <div className="h-full bg-gradient-to-r from-red-600 to-orange-600 transition-all" style={{ width: `${resetProgress}%` }} />
+                </div>
+                <div className="text-center text-white/40 text-xs">{Math.round(resetProgress)}%</div>
+              </>
+            ) : (
+              <>
+                <div className="text-center mb-4">
+                  <div className="text-4xl mb-2">✨</div>
+                  <div className="text-white text-sm font-semibold">Сброс завершен!</div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
